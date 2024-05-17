@@ -14,7 +14,10 @@ class Extractor:
     }
   
   def get_login_pages(self):
-    links = self.driver.find_elements(By.XPATH, '//a[contains(@href, "login") or contains(@href, "log-in") or contains(@href, "Login") or contains(@href, "sign-in") or contains(@href, "signin") or contains(@href, "Signin")]')    
+    links = self.driver.find_elements(By.XPATH, '//a[contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "login") or '
+                                                    'contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "log-in") or '
+                                                    'contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "sign-in") or '
+                                                    'contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "signin")]')    
     for link in links:
       href = link.get_attribute('href')
       if href and href not in self.login_urls:
@@ -39,21 +42,47 @@ class Extractor:
       links = self.driver.find_elements(By.TAG_NAME, "a")
       for link in links:
         href = link.get_attribute('href')
-        if href:
-          if href.endswith((".pdf", ".doc", ".docx", ".csv", ".xlsx", ".exe", ".bin", ".img", ".png", ".jpg", ".jpeg", ".zip", ".tar", ".gz", ".rar", ".7z")):
-            file_links.append(href)
+        if href and href.endswith((".pdf", ".doc", ".docx", ".csv", ".xlsx", ".exe", ".bin", ".img", ".png", ".jpg", ".jpeg", ".zip", ".tar", ".gz", ".rar", ".7z")):
+          file_links.append(href)
       return file_links
     except:
       return None
     
   def get_logo(self):
+    div_logo = self.get_logo_from_img()
+    a_logo = self.get_logo_from_a()
+    img_logo = self.get_logo_from_div()
+    if div_logo:
+      return div_logo
+    elif a_logo:
+      return a_logo
+    elif img_logo:
+      return img_logo
+    else:
+      return None
+  
+  def get_logo_from_div(self):
     try:
-      logos = self.driver.find_elements(By.TAG_NAME, "img")
-      for logo in logos:
-        src = logo.get_attribute('src')
-        class_names = logo.get_attribute('class')
-        if "logo" in src.lower() or "logo" in class_names.lower():
-          return src
+      logo = self.driver.find_element(By.XPATH, "//div[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo')]")
+      logo_link = logo.find_element(By.TAG_NAME, "img").get_attribute('src')
+      return logo_link
+    except:
+      return None
+  
+  def get_logo_from_a(self):
+    try:
+      logo = self.driver.find_element(By.XPATH, "//a[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo')]")
+      logo_link = logo.find_element(By.TAG_NAME, "img").get_attribute('src')
+      return logo_link
+    except:
+      return None
+  
+  def get_logo_from_img(self):
+    try:
+      logo = self.driver.find_element(By.XPATH, "//img[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo') or "
+                                                        "contains(translate(@src, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo')]")
+      logo_link = logo.get_attribute('src')
+      return logo_link
     except:
       return None
     
@@ -98,5 +127,4 @@ if __name__ == "__main__":
   extractor = Extractor(url)
   result = extractor.run()
   print(result)
-    
     
