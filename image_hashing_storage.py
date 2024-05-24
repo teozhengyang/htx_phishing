@@ -9,6 +9,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from extractor import Extractor
+from PhishIntention.phishintention import PhishIntentionWrapper
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -27,33 +28,58 @@ class ImageHashingStorage:
       for login_page in result["Login pages"]:
         self.all_urls.append(login_page)
   
-  def download_image(self, type, url):
+  def download_logo(self, url, screenshot_path):
     try:
-      if url[f"{type}"]:
-        image_url = url[f"{type}"]
-        response = requests.get(image_url)
+      if url["logo"]:
+        logo_url = url["logo"]
+        response = requests.get(logo_url)
         response.raise_for_status()
         data = response.content
-        if image_url.endswith(".svg"):
+        if logo_url.endswith(".svg"):
           image = cairosvg.svg2png(bytestring=data)
           encoded_data = base64.b64encode(image).decode('utf-8')
         else:
           encoded_data = base64.b64encode(data).decode('utf-8')
-        url[f"encoding_{type}"] = encoded_data
+        url["encoding_logo"] = encoded_data
+      else:
+        self.get_logo_from_screenshot(url, screenshot_path)
     except:
-      print(f"Error downloading {type}")
+      self.get_logo_from_screenshot(url, screenshot_path)
+  
+  def get_logo_from_screenshot(self, url, screenshot_path):
+    phishintention_cls = PhishIntentionWrapper()
+    image = phishintention_cls.test_orig_phishintention(screenshot_path)
+    url["encoding_logo"] = base64.b64encode(image).decode('utf-8')
+  
+  def download_favicon(self, url):
+    try:
+      if url["favicon"]:
+        favicon_url = url["favicon"]
+        response = requests.get(favicon_url)
+        response.raise_for_status()
+        data = response.content
+        if favicon_url.endswith(".svg"):
+          image = cairosvg.svg2png(bytestring=data)
+          encoded_data = base64.b64encode(image).decode('utf-8')
+        else:
+          encoded_data = base64.b64encode(data).decode('utf-8')
+        url["encoding_favicon"] = encoded_data
+    except:
+      print("Error downloading favicon")
     
   def download_logo_favicon_screenshots(self):
     for url in self.all_urls:
-      self.download_image("logo", url)
-      self.download_image("favicon", url)
-      
       driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
       driver.get(url["url"])
       screenshot = driver.get_screenshot_as_png()
       encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
       url["encoding_screenshot"] = encoded_screenshot
-        
+      with open("screenshot.png", "wb") as file:
+        file.write(screenshot)
+      
+      self.download_logo(url, "screenshot.png")
+      self.download_favicon(url)
+  
   def load_neural_hash_model(self):
     self.nh_session = onnxruntime.InferenceSession("neuralhash_model.onnx")
     self.nh_seed = open("neuralhash_128x96_seed1.dat", "rb").read()[128:]

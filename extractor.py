@@ -30,7 +30,7 @@ class Extractor:
       scripts = self.driver.find_elements(By.TAG_NAME, "script")
       for script in scripts:
         src = script.get_attribute('src')
-        if src and src.endswith(".js"):
+        if src:
           js_links.append(src)
       return js_links
     except:
