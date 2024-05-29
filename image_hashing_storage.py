@@ -7,6 +7,7 @@ import numpy as np
 import onnxruntime
 import os
 import requests
+import tempfile
 from dotenv import load_dotenv
 from extractor import Extractor
 from PhishIntention.phishintention import PhishIntentionWrapper
@@ -37,8 +38,12 @@ class ImageHashingStorage:
         data = response.content
         if logo_url.endswith(".svg"):
           image = cairosvg.svg2png(bytestring=data)
+          with open("logo.png", "wb") as file:
+            file.write(image)
           encoded_data = base64.b64encode(image).decode('utf-8')
         else:
+          with open("logo.png", "wb") as file:
+            file.write(data)
           encoded_data = base64.b64encode(data).decode('utf-8')
         url["encoding_logo"] = encoded_data
       else:
@@ -48,8 +53,11 @@ class ImageHashingStorage:
   
   def get_logo_from_screenshot(self, url, screenshot_path):
     phishintention_cls = PhishIntentionWrapper()
-    image = phishintention_cls.test_orig_phishintention(screenshot_path)
-    url["encoding_logo"] = base64.b64encode(image).decode('utf-8')
+    phishintention_cls.test_orig_phishintention(screenshot_path)
+    with open("logo.png", "rb") as file:
+      data = file.read()
+      encoded_data = base64.b64encode(data).decode('utf-8')
+    url["encoding_logo"] = encoded_data
   
   def download_favicon(self, url):
     try:
@@ -68,8 +76,32 @@ class ImageHashingStorage:
       print("Error downloading favicon")
     
   def download_logo_favicon_screenshots(self):
+    
+    LOCAL_DL_PATH = ""
+    def mkdtemp():
+      # create temp directory
+      tempfile.mkdtemp()
+    
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
+    options.add_experimental_option("prefs", {
+      "profile.default_content_setting_values.automatic_downloads": 1,
+      "download.default_directory": LOCAL_DL_PATH
+    })
+    options.add_argument('--no-sandbox')
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1280x1696")
+    options.add_argument("--single-process")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-dev-tools")
+    options.add_argument("--no-zygote")
+    options.add_argument(f"--user-data-dir={mkdtemp()}")
+    options.add_argument(f"--data-path={mkdtemp()}")
+    options.add_argument(f"--disk-cache-dir={mkdtemp()}")
+    options.add_argument("--remote-debugging-port=9222")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
     for url in self.all_urls:
-      driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
       driver.get(url["url"])
       screenshot = driver.get_screenshot_as_png()
       encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
@@ -121,7 +153,7 @@ class ImageHashingStorage:
     access_key = os.getenv("access_key")
     secret_access_key = os.getenv("secret_access_key")
     dyanmo = boto3.resource(service_name='dynamodb', region_name='ap-southeast-1', aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
-    url_table = dyanmo.Table('htx_phishing')
+    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
 
     for url in self.all_urls:
       if url["logo"] and url["favicon"]:
