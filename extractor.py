@@ -5,12 +5,13 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 class Extractor:
+  
   def __init__(self, main_url):
     self.main_url = main_url
     
+    # customisation of options
     LOCAL_DL_PATH = ""
     def mkdtemp():
-      # create temp directory
       tempfile.mkdtemp()
     
     options = webdriver.ChromeOptions()
@@ -38,6 +39,7 @@ class Extractor:
       "Login pages": [],
     }
   
+  # obtain login pages from main page
   def get_login_pages(self):
     links = self.driver.find_elements(By.XPATH, '//a[contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "login") or '
                                                     'contains(translate(@href, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "log-in") or '
@@ -49,6 +51,7 @@ class Extractor:
         self.login_urls.append(href)
     self.result["Login pages"] = [{"url": url} for url in self.login_urls]
   
+  # get all scripts in website
   def get_js_scripts(self):
     try: 
       js_links = []
@@ -61,6 +64,7 @@ class Extractor:
     except:
       return None
   
+  # get possible links to files in website
   def get_files(self):
     try:
       file_links = []
@@ -73,19 +77,7 @@ class Extractor:
     except:
       return None
     
-  def get_logo(self):
-    div_logo = self.get_logo_from_img()
-    a_logo = self.get_logo_from_a()
-    img_logo = self.get_logo_from_div()
-    if div_logo:
-      return div_logo
-    elif a_logo:
-      return a_logo
-    elif img_logo:
-      return img_logo
-    else:
-      return None
-  
+  # get logo from div tag
   def get_logo_from_div(self):
     try:
       logo = self.driver.find_element(By.XPATH, "//div[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo')]")
@@ -94,6 +86,7 @@ class Extractor:
     except:
       return None
   
+  # get logo from anchor tag
   def get_logo_from_a(self):
     try:
       logo = self.driver.find_element(By.XPATH, "//a[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo')]")
@@ -102,6 +95,7 @@ class Extractor:
     except:
       return None
   
+  # get logo from image tag
   def get_logo_from_img(self):
     try:
       logo = self.driver.find_element(By.XPATH, "//img[contains(translate(@class, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'logo') or "
@@ -109,8 +103,23 @@ class Extractor:
       logo_link = logo.get_attribute('src')
       return logo_link
     except:
+      return None  
+  
+  # get logo from website (div then anchor then image)
+  def get_logo(self):
+    div_logo = self.get_logo_from_div()
+    a_logo = self.get_logo_from_a()
+    img_logo = self.get_logo_from_img()
+    if div_logo:
+      return div_logo
+    elif a_logo:
+      return a_logo
+    elif img_logo:
+      return img_logo
+    else:
       return None
     
+  # get favicon from website
   def get_favicon(self):
     try: 
       favicon = self.driver.find_element(By.XPATH, "//link[@rel='icon']")
@@ -119,6 +128,7 @@ class Extractor:
     except:
       return None
   
+  # insert data for main page
   def insert_main_data(self):
     self.driver.get(self.main_url)
     self.result["Main page"]["url"] = self.main_url
@@ -127,6 +137,7 @@ class Extractor:
     self.result["Main page"]["logo"] = self.get_logo()
     self.result["Main page"]["favicon"] = self.get_favicon()
 
+  # insert data for login pages
   def insert_login_data(self):
     self.get_login_pages()
     for page in self.result["Login pages"]:
@@ -152,4 +163,5 @@ if __name__ == "__main__":
   extractor = Extractor(url)
   result = extractor.run()
   print(result)
+    
     
