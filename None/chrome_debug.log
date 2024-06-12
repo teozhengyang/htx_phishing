@@ -1,0 +1,84 @@
+[298454:298454:0612/143509.609817:WARNING:chrome_main_delegate.cc(750)] This is Chrome version 124.0.6367.207 (not a warning)
+[298454:298454:0612/143509.613768:INFO:config_dir_policy_loader.cc(118)] Skipping mandatory platform policies because no policy file was found at: /etc/opt/chrome/policies/managed
+[298454:298454:0612/143509.613802:INFO:config_dir_policy_loader.cc(118)] Skipping recommended platform policies because no policy file was found at: /etc/opt/chrome/policies/recommended
+[298454:298468:0612/143509.619640:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298468:0612/143509.620537:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298468:0612/143509.620590:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298468:0612/143509.620610:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298454:0612/143509.622195:WARNING:audio_manager_linux.cc(53)] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
+[298454:298454:0612/143509.640821:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
+[298454:298454:0612/143509.641408:INFO:chrome_browser_cloud_management_controller.cc(168)] Starting CBCM Controller Initialization
+[298454:298454:0612/143509.641447:INFO:chrome_browser_cloud_management_controller.cc(196)] No machine level policy manager exists.
+[298454:298468:0612/143509.648026:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298468:0612/143509.648085:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[298454:298454:0612/143509.648594:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
+[298454:298454:0612/143509.656954:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
+[298454:298454:0612/143509.714006:WARNING:browser_management_service.cc(128)] EnterpriseLogoUrl fetch failed with error code -1 and MIME type 
+[298514:298514:0612/143509.733266:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
+[298514:298514:0612/143509.737093:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
+[298454:298454:0612/143509.749694:WARNING:bluez_dbus_manager.cc(248)] Floss manager not present, cannot set Floss enable/disable.
+[298454:298523:0612/143509.874783:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.DBus.Properties.Get: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[298454:298523:0612/143509.875028:WARNING:property.cc(144)] DaemonVersion: GetAndBlock: failed.
+[298454:298523:0612/143509.875532:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.GetDisplayDevice: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[298454:298523:0612/143509.876095:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.EnumerateDevices: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[298524:298524:0612/143509.922776:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
+[298524:298524:0612/143509.928698:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
+[298534:298534:0612/143509.965506:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
+[298534:298534:0612/143509.969638:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
+[298454:298454:0612/143510.180053:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'attribution-reporting'.", source:  (0)
+[298454:298454:0612/143510.180148:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'battery'.", source:  (0)
+[298454:298454:0612/143510.180175:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+[298454:298454:0612/143510.180195:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'compute-pressure'.", source:  (0)
+[298454:298454:0612/143510.180213:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'interest-cohort'.", source:  (0)
+[298454:298454:0612/143510.180230:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage'.", source:  (0)
+[298454:298454:0612/143510.180249:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage-select-url'.", source:  (0)
+[298454:298454:0612/143510.180295:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'usb-unrestricted'.", source:  (0)
+[298454:298454:0612/143510.288490:INFO:CONSOLE(0)] "[DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o", source: https://www.facebook.com/ (0)
+[298454:298454:0612/143510.313614:INFO:CONSOLE(0)] "
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;", source:  (0)
+[298454:298454:0612/143510.313715:INFO:CONSOLE(0)] "
+%cThis is a browser feature intended for developers. If someone told you to copy and paste something here to enable a Facebook feature or "hack" someone's account, it is a scam and will give them access to your Facebook account. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143510.313728:INFO:CONSOLE(0)] "
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143510.313736:INFO:CONSOLE(0)] "
+%c ", source:  (0)
+[298454:298454:0612/143511.155854:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'attribution-reporting'.", source:  (0)
+[298454:298454:0612/143511.156041:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'battery'.", source:  (0)
+[298454:298454:0612/143511.156089:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+[298454:298454:0612/143511.156345:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'compute-pressure'.", source:  (0)
+[298454:298454:0612/143511.156521:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'interest-cohort'.", source:  (0)
+[298454:298454:0612/143511.156552:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage'.", source:  (0)
+[298454:298454:0612/143511.156575:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage-select-url'.", source:  (0)
+[298454:298454:0612/143511.156599:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'usb-unrestricted'.", source:  (0)
+[298454:298454:0612/143511.359696:INFO:CONSOLE(69)] "ErrorUtils caught an error:
+
+CometRouterLoadingContextInternals is not set
+
+Subsequent non-fatal errors won't be logged; see https://fburl.com/debugjs.", source: https://static.xx.fbcdn.net/rsrc.php/v3/yi/r/Qj-BdKDLI_z.js?_nc_x=Ij3Wp8lg5Kz (69)
+[298454:298454:0612/143511.382793:INFO:CONSOLE(0)] "
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;", source:  (0)
+[298454:298454:0612/143511.383044:INFO:CONSOLE(0)] "
+%cThis is a browser feature intended for developers. If someone told you to copy and paste something here to enable a Facebook feature or "hack" someone's account, it is a scam and will give them access to your Facebook account. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143511.383170:INFO:CONSOLE(0)] "
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143511.383275:INFO:CONSOLE(0)] "
+%c ", source:  (0)
+[298454:298454:0612/143511.625360:INFO:CONSOLE(0)] "[DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o", source: https://www.facebook.com/login/identify/?ctx=recover&ars=facebook_login&from_login_screen=0 (0)
+[298454:298454:0612/143511.983766:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'attribution-reporting'.", source:  (0)
+[298454:298454:0612/143511.983877:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'battery'.", source:  (0)
+[298454:298454:0612/143511.983904:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.", source:  (0)
+[298454:298454:0612/143511.983925:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'compute-pressure'.", source:  (0)
+[298454:298454:0612/143511.983947:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'interest-cohort'.", source:  (0)
+[298454:298454:0612/143511.983967:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage'.", source:  (0)
+[298454:298454:0612/143511.983987:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'shared-storage-select-url'.", source:  (0)
+[298454:298454:0612/143511.984007:INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'usb-unrestricted'.", source:  (0)
+[298454:298454:0612/143512.065319:INFO:CONSOLE(0)] "
+%cStop! font-family:helvetica; font-size:20px; font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;", source:  (0)
+[298454:298454:0612/143512.065394:INFO:CONSOLE(0)] "
+%cThis is a browser feature intended for developers. If someone told you to copy and paste something here to enable a Facebook feature or "hack" someone's account, it is a scam and will give them access to your Facebook account. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143512.065405:INFO:CONSOLE(0)] "
+%cSee https://www.facebook.com/selfxss for more information. font-family:helvetica; font-size:20px; ", source:  (0)
+[298454:298454:0612/143512.065426:INFO:CONSOLE(0)] "
+%c ", source:  (0)
+[298454:298482:0612/143512.403112:WARNING:pref_notifier_impl.cc(60)] Init observer found at shutdown.
+[298454:298454:0612/143512.486045:WARNING:pref_notifier_impl.cc(41)] Pref observer for media_router.cast_allow_all_ips found at shutdown.

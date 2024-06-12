@@ -77,10 +77,15 @@ class ImageHashingStorage:
           image = cairosvg.svg2png(bytestring=data)
         else:
           image = data
+        with open("favicon.ico", "wb") as file:
+          file.write(image)
         encoded_data = base64.b64encode(image).decode('utf-8')
         url["encoding_favicon"] = encoded_data
+      else:
+        url["favicon"] = None
+        url["encoding_favicon"] = None
     except:
-      print("Error downloading favicon")
+      url["encoding_favicon"] = None
     
   # encode logo, favicon and screenshots
   def encode_logo_favicon_screenshots(self):
@@ -144,8 +149,10 @@ class ImageHashingStorage:
         hash_bits = ''.join(['1' if x >= 0 else '0' for x in hash_output])
         hash_hex = '{:0{}x}'.format(int(hash_bits, 2), len(hash_bits) // 4)
         url[f"hash_{type}"] = hash_hex
+      else:
+        url[f"hash_{type}"] = None
     except:
-      return None
+      url[f"hash_{type}"] = None
   
   # hash logo, favicon and screenshots (neural hash for logo and favicon, dhash for screenshots)
   def hash_logo_favicon_screenshots(self):
@@ -166,16 +173,8 @@ class ImageHashingStorage:
     secret_access_key = os.getenv("secret_access_key")
     dyanmo = boto3.resource(service_name='dynamodb', region_name='ap-southeast-1', aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-
     for url in self.all_urls:
-      if url["logo"] and url["favicon"]:
-        url_table.put_item(Item={'url': url["url"], 'encoding_logo': url["encoding_logo"], 'encoding_favicon': url["encoding_favicon"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_logo': str(url["hash_logo"]), 'hash_favicon': str(url["hash_favicon"]), 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
-      elif url["logo"]:
-        url_table.put_item(Item={'url': url["url"], 'encoding_logo': url["encoding_logo"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_logo': str(url["hash_logo"]), 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
-      elif url["favicon"]:
-        url_table.put_item(Item={'url': url["url"], 'encoding_favicon': url["encoding_favicon"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_favicon': str(url["hash_favicon"]), 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
-      else:
-        url_table.put_item(Item={'url': url["url"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
+      url_table.put_item(Item={'url': url["url"], 'encoding_logo': url["encoding_logo"], 'encoding_favicon': url["encoding_favicon"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_logo': str(url["hash_logo"]), 'hash_favicon': str(url["hash_favicon"]), 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
       
   def run(self):
     self.extract_all_pages()
@@ -209,10 +208,12 @@ if __name__ == "__main__":
                           ]
   urls_others = ["https://www.google.com", "https://www.facebook.com", "https://www.instagram.com", "https://www.x.com",
                  "https://www.shopee.com", "https://www.lazada.com", "https://www.amazon.com", "https://www.ticketmaster.com",
-                 "https://www.carousell.sg"
+                 "https://www.carousell.sg", "https://www.dbs.com.sg", "https://www.ocbc.com", "https://www.uob.com.sg", 
+                 "https://www.citibank.com.sg", "https://www.hsbc.com.sg", "https://www.maybank.com.sg", "https://www.sc.com/sg",
+                 "https://www.posb.com.sg"
                  ]
   urls = urls_ministries + urls_stats_boards + urls_organs_of_state +  urls_others
-  hashStorage = ImageHashingStorage(urls)
+  hashStorage = ImageHashingStorage(["https://www.google.com/", "https://www.facebook.com/"])
   hashStorage.run()
 
   
