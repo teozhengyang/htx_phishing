@@ -113,6 +113,72 @@ class ImageHashingStorage:
     options.add_argument(f"--disk-cache-dir={mkdtemp()}")
     options.add_argument("--remote-debugging-port=9222")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    driver.execute_script(""" 
+                // Function to remove elements by selector 
+                function removeElementsBySelector(selector) { 
+                    var elements = document.querySelectorAll(selector); 
+                    elements.forEach(function(element) { 
+                        element.remove(); 
+                    }); 
+                } 
+ 
+                // Common ad and video elements selectors 
+                var adAndVideoSelectors = [ 
+                    'video',  // Remove all video tags 
+                    'iframe',  // Remove all iframe tags (often used for embedded ads and videos) 
+                    '.advertisement',  
+                    '.ad',  
+                    '.ads',  
+                    '.ad-container',  
+                    '.ad-banner', 
+                    '.ad-block',  
+                    '.ad-wrapper',  
+                    '.ad-embed',  
+                    '.sponsored', 
+                    '[class*="ad"]',  // Elements with 'ad' in the class name 
+                    '[id*="ad"]',  // Elements with 'ad' in the ID 
+                    '[class*="banner"]',  // Elements with 'banner' in the class name 
+                    '[id*="banner"]',  // Elements with 'banner' in the ID 
+                    '.popup',  
+                    '.modal',  
+                    '.carousel',  
+                    '.slider', 
+                    '[data-ad]',  // Elements with data attributes related to ads 
+                    '[data-video]',  // Elements with data attributes related to videos 
+                    '[data-dynamic]', 
+                    '.sponsored-content', 
+                    '.sponsored-link', 
+                    '.promoted',  // Promoted content or links 
+                    '.promo',  // Promotional content or links 
+                    '.ad-slot', 
+                    '.adsbygoogle' 
+                ]; 
+ 
+                // Remove all identified ad and video elements 
+                adAndVideoSelectors.forEach(function(selector) { 
+                    removeElementsBySelector(selector); 
+                }); 
+ 
+                // Handling any ads or videos added dynamically after page load 
+                var observer = new MutationObserver(function(mutations) { 
+                    mutations.forEach(function(mutation) { 
+                        if (mutation.addedNodes) { 
+                            mutation.addedNodes.forEach(function(node) { 
+                                if (node.nodeType === 1) {  // Check if it's an element node 
+                                    adAndVideoSelectors.forEach(function(selector) { 
+                                        if (node.matches(selector)) { 
+                                            node.remove(); 
+                                        } 
+                                    }); 
+                                } 
+                            }); 
+                        } 
+                    }); 
+                }); 
+ 
+                // Observe changes to the body element and its children 
+                observer.observe(document.body, { childList: true, subtree: true }); 
+            """)
     
     for url in self.all_urls:
       driver.get(url["url"])
@@ -180,7 +246,6 @@ class ImageHashingStorage:
     self.extract_all_pages()
     self.encode_logo_favicon_screenshots()
     self.hash_logo_favicon_screenshots()
-    self.store_logo_images_favicon_screenshots()
     
 if __name__ == "__main__":
   urls_ministries =["http://www.mci.gov.sg", "http://www.mccy.gov.sg", "http://www.mindef.gov.sg", "http://www.moe.gov.sg", 
@@ -213,7 +278,7 @@ if __name__ == "__main__":
                  "https://www.posb.com.sg"
                  ]
   urls = urls_ministries + urls_stats_boards + urls_organs_of_state +  urls_others
-  hashStorage = ImageHashingStorage(["https://www.google.com/", "https://www.facebook.com/"])
+  hashStorage = ImageHashingStorage(["https://www.lazada.sg"])
   hashStorage.run()
 
   
