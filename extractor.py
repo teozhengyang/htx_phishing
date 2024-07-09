@@ -1,3 +1,4 @@
+import json
 import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -69,10 +70,14 @@ class Extractor:
     try:
       file_links = []
       links = self.driver.find_elements(By.TAG_NAME, "a")
+      keywords = ["pdf", "doc", "docx", "csv", "xlsx", "exe", "bin", "img", "png", "jpg", "jpeg", "zip", "tar", "gz", "rar", "7z", "apk"]
+      
       for link in links:
         href = link.get_attribute('href')
-        if href and href.endswith((".pdf", ".doc", ".docx", ".csv", ".xlsx", ".exe", ".bin", ".img", ".png", ".jpg", ".jpeg", ".zip", ".tar", ".gz", ".rar", ".7z")):
-          file_links.append(href)
+        for keyword in keywords:
+          if href and href.endswith(keyword):
+            file_links.append(href)
+            break
       return file_links
     except:
       return None
@@ -156,12 +161,13 @@ class Extractor:
     # close the driver
     self.driver.close()
     
+    with open('extractor_result.json', 'w') as json_file:
+      json.dump(self.result, json_file, indent=4)
+    
     return self.result
 
 if __name__ == "__main__":
   url = input("Enter the URL: ")
   extractor = Extractor(url)
   result = extractor.run()
-  print(result)
-    
     

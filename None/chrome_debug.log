@@ -1,57 +1,26 @@
-[313435:313435:0612/160220.351136:WARNING:chrome_main_delegate.cc(750)] This is Chrome version 124.0.6367.207 (not a warning)
-[313435:313435:0612/160220.357249:INFO:config_dir_policy_loader.cc(118)] Skipping mandatory platform policies because no policy file was found at: /etc/opt/chrome/policies/managed
-[313435:313435:0612/160220.357315:INFO:config_dir_policy_loader.cc(118)] Skipping recommended platform policies because no policy file was found at: /etc/opt/chrome/policies/recommended
-[313435:313450:0612/160220.366493:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313450:0612/160220.366573:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313450:0612/160220.366597:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313450:0612/160220.366641:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313435:0612/160220.367750:WARNING:audio_manager_linux.cc(53)] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
-[313435:313435:0612/160220.371564:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
-[313435:313435:0612/160220.372023:INFO:chrome_browser_cloud_management_controller.cc(168)] Starting CBCM Controller Initialization
-[313435:313435:0612/160220.372075:INFO:chrome_browser_cloud_management_controller.cc(196)] No machine level policy manager exists.
-[313435:313450:0612/160220.449778:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313450:0612/160220.450081:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
-[313435:313435:0612/160220.454970:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
-[313435:313435:0612/160220.487545:ERROR:system_network_context_manager.cc(883)] Cannot use V8 Proxy resolver in single process mode.
-[313435:313435:0612/160220.525244:WARNING:browser_management_service.cc(128)] EnterpriseLogoUrl fetch failed with error code -1 and MIME type 
-[313488:313488:0612/160220.542539:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
-[313488:313488:0612/160220.545206:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
-[313435:313435:0612/160220.557266:WARNING:bluez_dbus_manager.cc(248)] Floss manager not present, cannot set Floss enable/disable.
-[313435:313501:0612/160220.625315:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.DBus.Properties.Get: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
-[313435:313501:0612/160220.625837:WARNING:property.cc(144)] DaemonVersion: GetAndBlock: failed.
-[313435:313501:0612/160220.626491:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.GetDisplayDevice: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
-[313435:313501:0612/160220.627134:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.EnumerateDevices: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
-[313502:313502:0612/160220.664738:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
-[313502:313502:0612/160220.675437:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
-[313511:313511:0612/160220.724480:WARNING:chrome_main_delegate.cc(331)] process type 'renderer' should be created through the zygote.
-[313511:313511:0612/160220.728322:WARNING:runtime_features.cc(730)] AttributionReportingCrossAppWeb cannot be enabled in this configuration. Use --enable-features=ConversionMeasurement,AttributionReportingCrossAppWeb in addition.
-[313435:313435:0612/160221.477628:INFO:CONSOLE(1)] "Root node #ice-container is not found, current root is automatically created by the framework.", source: https://g.lazcdn.com/g/psolution/lzd-head-foot/1.0.41/js/472.js (1)
-[313435:313435:0612/160221.555634:INFO:CONSOLE(1978)] "--- itrace sdk onload ---", source: https://www.lazada.sg/ (1978)
-[313435:313435:0612/160221.555790:INFO:CONSOLE(1978)] "--- itrace expansion onload ---", source: https://www.lazada.sg/ (1978)
-[313435:313435:0612/160221.692787:INFO:CONSOLE(3)] "[aplus log]: APLUS INIT SUCCESS", source: https://g.lazcdn.com/res-d/alilog/mlog/aplus/202980191.js (3)
-[313435:313435:0612/160221.880425:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/ (0)
-[313435:313435:0612/160221.887439:INFO:CONSOLE(1)] "seometa init [object Object]", source: https://g.lazcdn.com/g/??code/npm/@ali/lzdrwb-seometa/5.0.3/index-pc.js,code/npm/@ali/lzdrwb-homepage-ts/1.1.39/index-pc.js,rax-pkg/rax-view/2.3.0/index.js,rax-pkg/universal-env/3.3.3/index.js,code/npm/@ali/pnpm-uni--env/1.0.6/index.js,rax-pkg/rax-text/2.2.0/index.js,code/npm/@ali/gcom-rax-picture/1.3.1/index.js,rax-pkg/rax-image/2.2.6/index.js,code/npm/@ali/flute-i18n/1.0.1/index.js (1)
-[313435:313435:0612/160221.906722:WARNING:capture_device_ranking.h(255)] Can't initialize the value of media.audio_input.user_preference_ranking because media.default_audio_capture_device isn't registered or is empty
-[313435:313435:0612/160221.906774:WARNING:capture_device_ranking.h(255)] Can't initialize the value of media.video_input.user_preference_ranking because media.default_video_capture_Device isn't registered or is empty
-[313435:313435:0612/160221.906818:INFO:CONSOLE(6)] "这是测试On_CustomEvent_Trigger的代码，监测到业务页面触发了pageReady=complete事件，现在开始上报日志", source: https://g.lazcdn.com/res-d/alilog/mlog/aplus/202980191.js (6)
-[313435:313435:0612/160221.931928:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160221.951361:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160222.076023:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160224.455353:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160224.455489:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160226.935498:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160231.953804:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160236.986107:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160242.003768:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160247.021652:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160252.054003:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160257.050166:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160302.065220:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160307.098120:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160312.109766:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160317.129225:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160322.412697:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160327.183286:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313435:0612/160332.200387:INFO:CONSOLE(0)] "Third-party cookie will be blocked. Learn more in the Issues tab.", source: https://www.lazada.sg/#? (0)
-[313435:313463:0612/160433.464902:WARNING:pref_notifier_impl.cc(60)] Init observer found at shutdown.
-[313435:313435:0612/160433.521739:WARNING:pref_notifier_impl.cc(41)] Pref observer for media_router.cast_allow_all_ips found at shutdown.
+[73520:73520:0709/153200.827965:WARNING:chrome_main_delegate.cc(742)] This is Chrome version 126.0.6478.126 (not a warning)
+[73520:73534:0709/153200.837161:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73534:0709/153200.837453:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73534:0709/153200.837477:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73534:0709/153200.837491:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73520:0709/153200.839417:WARNING:audio_manager_linux.cc(53)] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
+[73520:73520:0709/153200.843065:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[73520:73520:0709/153200.843609:INFO:chrome_browser_cloud_management_controller.cc(196)] No machine level policy manager exists.
+[73520:73534:0709/153200.911424:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73534:0709/153200.911521:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[73520:73520:0709/153200.912632:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[73520:73520:0709/153200.921562:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[73520:73520:0709/153200.958351:WARNING:browser_management_service.cc(128)] EnterpriseLogoUrl fetch failed with error code -1 and MIME type 
+[73520:73520:0709/153200.982499:WARNING:bluez_dbus_manager.cc(248)] Floss manager not present, cannot set Floss enable/disable.
+[73576:73576:0709/153200.983255:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73520:73587:0709/153201.045692:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.DBus.Properties.Get: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[73520:73587:0709/153201.048076:WARNING:property.cc(144)] DaemonVersion: GetAndBlock: failed.
+[73520:73587:0709/153201.049048:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.GetDisplayDevice: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[73520:73587:0709/153201.050014:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.EnumerateDevices: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[73588:73588:0709/153201.082820:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73597:73597:0709/153201.120659:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73610:73610:0709/153201.186908:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73628:73628:0709/153201.452484:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73638:73638:0709/153201.512602:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[73520:73549:0709/153201.621711:WARNING:pref_notifier_impl.cc(60)] Init observer found at shutdown.
+[73520:73520:0709/153201.668988:WARNING:pref_notifier_impl.cc(41)] Pref observer for media_router.cast_allow_all_ips found at shutdown.
