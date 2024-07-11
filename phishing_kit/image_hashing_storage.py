@@ -10,7 +10,7 @@ import requests
 import tempfile
 import tldextract
 from dotenv import load_dotenv
-from extractor import Extractor
+from extractor.extractor import Extractor
 from PhishIntention.phishintention import PhishIntentionWrapper
 from PIL import Image
 from selenium import webdriver
