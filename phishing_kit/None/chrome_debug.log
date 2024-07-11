@@ -1,0 +1,25 @@
+[283366:283366:0711/223820.828839:WARNING:chrome_main_delegate.cc(742)] This is Chrome version 126.0.6478.126 (not a warning)
+[283366:283380:0711/223820.846114:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283380:0711/223820.847345:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283380:0711/223820.847413:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283380:0711/223820.847437:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283366:0711/223820.852824:WARNING:audio_manager_linux.cc(53)] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized.
+[283366:283366:0711/223820.873341:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[283366:283366:0711/223820.873910:INFO:chrome_browser_cloud_management_controller.cc(196)] No machine level policy manager exists.
+[283366:283380:0711/223820.973094:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283380:0711/223820.973334:ERROR:bus.cc(407)] Failed to connect to the bus: Failed to connect to socket /run/user/1000/bus: No such file or directory
+[283366:283366:0711/223820.974023:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[283366:283366:0711/223820.994808:ERROR:system_network_context_manager.cc(885)] Cannot use V8 Proxy resolver in single process mode.
+[283366:283366:0711/223821.025743:WARNING:browser_management_service.cc(128)] EnterpriseLogoUrl fetch failed with error code -1 and MIME type 
+[283366:283366:0711/223821.038349:WARNING:bluez_dbus_manager.cc(248)] Floss manager not present, cannot set Floss enable/disable.
+[283420:283420:0711/223821.045598:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[283366:283429:0711/223821.099934:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.DBus.Properties.Get: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[283366:283429:0711/223821.100015:WARNING:property.cc(144)] DaemonVersion: GetAndBlock: failed.
+[283366:283429:0711/223821.100383:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.GetDisplayDevice: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[283366:283429:0711/223821.101121:ERROR:object_proxy.cc(576)] Failed to call method: org.freedesktop.UPower.EnumerateDevices: object_path= /org/freedesktop/UPower: org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.UPower was not provided by any .service files
+[283430:283430:0711/223821.133947:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[283437:283437:0711/223821.170800:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[283441:283441:0711/223821.188073:WARNING:chrome_main_delegate.cc(323)] process type 'renderer' should be created through the zygote.
+[283366:283366:0711/223821.411746:INFO:CONSOLE(194)] "Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information.", source: https://cdn.jsdelivr.net/npm/@govtechsg/sgds-web-component/Masthead/index.js (194)
+[283366:283396:0711/223822.557238:WARNING:pref_notifier_impl.cc(60)] Init observer found at shutdown.
+[283366:283366:0711/223822.605121:WARNING:pref_notifier_impl.cc(41)] Pref observer for media_router.cast_allow_all_ips found at shutdown.
