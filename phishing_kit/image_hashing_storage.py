@@ -11,7 +11,7 @@ import tempfile
 import tldextract
 from dotenv import load_dotenv
 from extractor.extractor import Extractor
-from PhishIntention.phishintention import PhishIntentionWrapper
+from models.PhishIntention.phishintention import PhishIntentionWrapper
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -193,8 +193,8 @@ class ImageHashingStorage:
   
   # load neural hash model
   def load_neural_hash_model(self):
-    self.nh_session = onnxruntime.InferenceSession("neuralhash_model.onnx")
-    self.nh_seed = open("neuralhash_128x96_seed1.dat", "rb").read()[128:]
+    self.nh_session = onnxruntime.InferenceSession("./models/neuralhash_model.onnx")
+    self.nh_seed = open("./models/neuralhash_128x96_seed1.dat", "rb").read()[128:]
     self.nh_seed = np.frombuffer(self.nh_seed, dtype=np.float32).reshape([96,128])
   
   # neural hash image
@@ -246,6 +246,7 @@ class ImageHashingStorage:
     self.extract_all_pages()
     self.encode_logo_favicon_screenshots()
     self.hash_logo_favicon_screenshots()
+    self.store_logo_images_favicon_screenshots()
     
 if __name__ == "__main__":
   urls_ministries =["http://www.mci.gov.sg", "http://www.mccy.gov.sg", "http://www.mindef.gov.sg", "http://www.moe.gov.sg", 
@@ -278,7 +279,7 @@ if __name__ == "__main__":
                  "https://www.posb.com.sg"
                  ]
   urls = urls_ministries + urls_stats_boards + urls_organs_of_state +  urls_others
-  hashStorage = ImageHashingStorage(["https://www.lazada.sg"])
+  hashStorage = ImageHashingStorage([urls])
   hashStorage.run()
 
   
