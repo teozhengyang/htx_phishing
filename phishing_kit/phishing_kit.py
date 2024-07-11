@@ -1,11 +1,15 @@
+import anthropic
 import boto3
 import os
+import requests
+import ollama
+import json
+import tldextract
 from dotenv import load_dotenv
 from phishing_kit.image_hashing_storage import ImageHashingStorage
 from fuzzywuzzy import fuzz
-import requests
 from bs4 import BeautifulSoup
-import ollama
+from extractor.extractor import Extractor
 
 class PhishingKit:
   
@@ -65,33 +69,64 @@ class PhishingKit:
   
   # ask Llama 3 whether phishing (dom structures/texts)
   def ask_llama3(self):
+
+    #client = anthropic.Anthropic()
+
+    #message = client.messages.create(
+                #model="claude-3-opus-20240229",
+                #max_tokens=1000,
+                #temperature=0.0,
+                #system="Respond in short and clear sentences.",
+                #messages=[
+                  #{
+                      #"role": "user",
+                      #"content": "Can you explain the concept of neural networks?"
+                  #}
+                #]
+              #)
+
+    #print(message.content)
+
     response = ollama.chat(
       model="llama3",
       messages=[
           {
               "role": "user",
-              "content": f"Decide whether following dom tree is phishing and exactly the phishing portion. Dom tree: {self.dom_tree}. Can integrate logo similarity: {self.logo_similarity}, favicon similarity: {self.favicon_similarity}, screenshot similarity: {self.screenshot_similarity} as whitelisted urls. and other features like page text eg click here to submit, paynow, login here or html like structure of buttons surrounding phishing element hyperlink and other appropriate features.",
+              "content": f"Output the following in JSON format. Decide whether dom tree is phishing or not. {self.dom_tree}. If yes provide links and features as keys and relevant values. If no, provide a message saying not phishing. Also provide the logo, favicon and screenshot similarity scores. Logo: {self.logo_similarity}, Favicon: {self.favicon_similarity}, Screenshot: {self.screenshot_similarity}.",
           },
       ],
     )
-    print(response["message"]["content"])
+    return response["message"]["content"]
   
   # obtain final verdict
   def run(self):
     self.get_similar_whitelisted_urls()
     self.get_hashes()
     self.compare_hashes()
-    self.ask_llama3()
+    return self.ask_llama3()
     
 if __name__ == "__main__":
   url = input("Enter the URL: ")  
-  hash_storage = ImageHashingStorage([url])
-  hash_storage.extract_all_pages()
-  hash_storage.encode_logo_favicon_screenshots()
-  hash_storage.hash_logo_favicon_screenshots()
-  url_info = hash_storage.all_urls[0]
-  phishing_kit = PhishingKit(url, url_info)
-  phishing_kit.run()
-
-
+  url_info = []
+  extractor = Extractor(url)
+  result = extractor.run()
+  brand = tldextract.extract(url).domain
+  result = json.loads(result)
+  result["Main page"]["brand"] = brand
+  url_info.append(result["Main page"])
+  for i, login_page in enumerate(result["Login pages"]):
+    result["Login pages"][i]["brand"] = brand
+    url_info.append(login_page)
+    
+  hashStorage = ImageHashingStorage(url_info)
+  urls_all_info = hashStorage.run()
+  
+  org_url_info = hashStorage.all_urls[0]
+  phishing_kit = PhishingKit(url, org_url_info)
+  pk_result = phishing_kit.run()
+  pk_result_dict = {}
+  pk_result_dict["phishing_kit_result"] = pk_result
+  
+  with open('phishing_kit_result.json', 'w') as json_file:
+      json.dump(pk_result_dict, json_file, indent=4)
 
