@@ -13,5 +13,5 @@ def lambda_handler(event, context):
     result = extractor.run()
     return {
         'statusCode': 200,
-        'body': json.dumps(result)
+        'body': result
     }

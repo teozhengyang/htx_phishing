@@ -165,10 +165,4 @@ class Extractor:
       json.dump(self.result, json_file, indent=4)
     
     return json.dumps(self.result)
-
-if __name__ == "__main__":
-  url = input("Enter the URL: ")
-  extractor = Extractor(url)
-  result = extractor.run()
-  print(result) 
     
