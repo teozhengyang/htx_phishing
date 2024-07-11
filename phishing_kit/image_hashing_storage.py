@@ -20,22 +20,9 @@ from models.PhishIntention.phishintention import PhishIntentionWrapper
 
 class ImageHashingStorage:
   
-  def __init__(self, urls):
-    self.main_urls = urls
-    self.all_urls = []
+  def __init__(self, urls_info):
+    self.urls_info = urls_info
     self.phishintention_cls = PhishIntentionWrapper()
-  
-  # extract all pages from main urls
-  def extract_all_pages(self):
-    for url in self.main_urls:
-      extractor = Extractor(url)
-      result = extractor.run()
-      self.all_urls.append(result["Main page"])
-      brand = tldextract.extract(url).domain
-      result["Main page"]["brand"] = brand
-      for i, login_page in enumerate(result["Login pages"]):
-        self.all_urls.append(login_page)
-        result["Login pages"][i]["brand"] = brand
       
   # use detectron v2 model to get logo from screenshot
   def encode_logo_from_screenshot(self, url, screenshot_path):
@@ -181,7 +168,7 @@ class ImageHashingStorage:
                 observer.observe(document.body, { childList: true, subtree: true }); 
             """)
     
-    for url in self.all_urls:
+    for url in self.urls_info:
       driver.get(url["url"])
       screenshot = driver.get_screenshot_as_png()
       encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
@@ -215,7 +202,7 @@ class ImageHashingStorage:
         hash_output = self.nh_seed.dot(outputs[0].flatten()) 
         hash_bits = ''.join(['1' if x >= 0 else '0' for x in hash_output])
         hash_hex = '{:0{}x}'.format(int(hash_bits, 2), len(hash_bits) // 4)
-        url[f"hash_{type}"] = hash_hex
+        url[f"hash_{type}"] = str(hash_hex)
       else:
         url[f"hash_{type}"] = None
     except:
@@ -223,7 +210,7 @@ class ImageHashingStorage:
   
   # hash logo, favicon and screenshots (neural hash for logo and favicon, dhash for screenshots)
   def hash_logo_favicon_screenshots(self):
-    for url in self.all_urls:
+    for url in self.urls_info:
       self.load_neural_hash_model()
       self.neural_hash_image("logo", url)
       self.neural_hash_image("favicon", url)
@@ -231,7 +218,7 @@ class ImageHashingStorage:
       decoded_screenshot = base64.b64decode(url["encoding_screenshot"])
       screenshot = Image.open(io.BytesIO(decoded_screenshot))
       screenshot_hash = imagehash.dhash(screenshot)
-      url["hash_screenshot"] = screenshot_hash
+      url["hash_screenshot"] = str(screenshot_hash)
     
   # store encodings and hashes in db
   def store_logo_images_favicon_screenshots(self):
@@ -240,36 +227,30 @@ class ImageHashingStorage:
     secret_access_key = os.getenv("secret_access_key")
     dyanmo = boto3.resource(service_name='dynamodb', region_name='ap-southeast-1', aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    for url in self.all_urls:
+    for url in self.urls_info:
       url_table.put_item(Item={'url': url["url"], 'encoding_logo': url["encoding_logo"], 'encoding_favicon': url["encoding_favicon"], 'encoding_screenshot': url["encoding_screenshot"], 'hash_logo': str(url["hash_logo"]), 'hash_favicon': str(url["hash_favicon"]), 'hash_screenshot': str(url["hash_screenshot"]), 'brand': url["brand"]})
       
   def run(self):
-    self.extract_all_pages()
     self.encode_logo_favicon_screenshots()
     self.hash_logo_favicon_screenshots()
     self.store_logo_images_favicon_screenshots()
-
-urls_organs_of_state = ["https://www.agc.gov.sg/", "https://www.ago.gov.sg/", "https://www.iac.gov.sg/", "https://www.istana.gov.sg/",
-                          "https://www.judiciary.gov.sg/", "https://www.parliament.gov.sg/", "https://www.psc.gov.sg/", "https://www.cabinet.gov.sg/"
-                        ]
-
+    return self.urls_info
+  
 if __name__ == "__main__":
-  urls = urls_organs_of_state
-  all_urls_brands = []
+  urls = []
+  urls_info = []
   for url in urls:
     extractor = Extractor(url)
     result = extractor.run()
     brand = tldextract.extract(url).domain
     result = json.loads(result)
     result["Main page"]["brand"] = brand
-    all_urls_brands.append(result["Main page"])
+    urls_info.append(result["Main page"])
     for i, login_page in enumerate(result["Login pages"]):
       result["Login pages"][i]["brand"] = brand
-      all_urls_brands.append(login_page)
+      urls_info.append(login_page)
+  hashStorage = ImageHashingStorage(urls_info)
+  urls_all_info = hashStorage.run()    
   with open('storage_result.json', 'w') as json_file:
-      json.dump(all_urls_brands, json_file, indent=4)
-  print(all_urls_brands)
-  #hashStorage = ImageHashingStorage(all_urls_brands)
-  #hashStorage.run()
-
+      json.dump(urls_all_info, json_file, indent=4)
   

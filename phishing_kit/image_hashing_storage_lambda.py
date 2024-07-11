@@ -1,3 +1,4 @@
+import boto3
 import json
 import tldextract
 from extractor.extractor import Extractor
@@ -33,25 +34,47 @@ urls_others = ["https://www.google.com", "https://www.facebook.com", "https://ww
                  "https://www.posb.com.sg"
                 ]
 
+s3_client = boto3.client('s3')
+
 def lambda_handler(event, context):
-    urls = []
-    all_urls_brands = []
+    urls = urls_ministries + urls_stats_boards + urls_organs_of_state + urls_others
+    urls_info = []
     for url in urls:
-      extractor = Extractor(url)
-      result = extractor.run()
-      brand = tldextract.extract(url).domain
-      result = json.loads(result)
-      result["Main page"]["brand"] = brand
-      all_urls_brands.append(result["Main page"])
-      print(result["Main page"])
-      for i, login_page in enumerate(result["Login pages"]):
-        result["Login pages"][i]["brand"] = brand
-        all_urls_brands.append(login_page)
+        extractor = Extractor(url)
+        result = extractor.run()
+        brand = tldextract.extract(url).domain
+        result = json.loads(result)
+        result["Main page"]["brand"] = brand
+        urls_info.append(result["Main page"])
+        for i, login_page in enumerate(result["Login pages"]):
+            result["Login pages"][i]["brand"] = brand
+            urls_info.append(login_page)
+    hashStorage = ImageHashingStorage(urls_info)
+    urls_all_info = hashStorage.run()    
     with open('storage_result.json', 'w') as json_file:
-        json.dump(all_urls_brands, json_file, indent=4)
-    hashing_storage = ImageHashingStorage(all_urls_brands)
-    hashing_storage.run()
-    return {
-          'statusCode': 200,
-          'body': result
-    }
+      json.dump(urls_all_info, json_file, indent=4)
+    
+    # Convert the JSON result to a string
+    json_str = json.dumps(urls_all_info)
+
+    # Define the S3 bucket name and the file (object) name
+    bucket_name = 'imagestorage-zy'
+    object_name = f'storage_result.json'
+
+    try:
+        # Upload the JSON string to the S3 bucket
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=object_name,
+            Body=json_str,
+            ContentType='application/json'
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps(f'Successfully stored JSON result in {bucket_name}/{object_name}')
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f'Error storing JSON result: {str(e)}')
+        }
