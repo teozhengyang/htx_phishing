@@ -1,7 +1,7 @@
 import boto3
 import json
 import tldextract
-from extractor.extractor import Extractor
+from extractor.extractor_lambda import Extractor
 from image_hashing_storage import ImageHashingStorage
 
 urls_ministries =["http://www.mci.gov.sg", "http://www.mccy.gov.sg", "http://www.mindef.gov.sg", "http://www.moe.gov.sg", 

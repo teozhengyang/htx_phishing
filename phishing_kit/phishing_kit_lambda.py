@@ -1,5 +1,5 @@
 from extractor import Extractor
-from extractor.extractor import Extractor
+from extractor.extractor_lambda import Extractor
 from image_hashing_storage import ImageHashingStorage
 from phishing_kit import PhishingKit
 import json

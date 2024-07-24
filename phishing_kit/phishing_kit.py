@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from phishing_kit.image_hashing_storage import ImageHashingStorage
 from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
-from extractor.extractor import Extractor
+from extractor.extractor_lambda import Extractor
 
 class PhishingKit:
   
