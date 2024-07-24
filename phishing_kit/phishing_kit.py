@@ -1,12 +1,10 @@
-import anthropic
 import boto3
 import os
 import requests
-import ollama
 import json
 import tldextract
 from dotenv import load_dotenv
-from phishing_kit.image_hashing_storage import ImageHashingStorage
+from image_hashing_storage.image_hashing_storage_lambda import ImageHashingStorage
 from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
 from extractor.extractor_lambda import Extractor
@@ -51,10 +49,7 @@ class PhishingKit:
   
   # get hashes from dynamo db
   def get_hashes(self):
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_access_key = os.getenv("secret_access_key")
-    dyanmo = boto3.resource(service_name='dynamodb', region_name='ap-southeast-1', aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
+    dyanmo = boto3.resource(service_name='dynamodb')
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
     response = url_table.get_item(Key={'url': self.whitelisted_url})
     self.whitelisted_logo_hash = response["Item"]["hash_logo"]
@@ -87,46 +82,35 @@ class PhishingKit:
 
     #print(message.content)
 
-    response = ollama.chat(
-      model="llama3",
-      messages=[
-          {
-              "role": "user",
-              "content": f"Output the following in JSON format. Decide whether dom tree is phishing or not. {self.dom_tree}. If yes provide links and features as keys and relevant values. If no, provide a message saying not phishing. Also provide the logo, favicon and screenshot similarity scores. Logo: {self.logo_similarity}, Favicon: {self.favicon_similarity}, Screenshot: {self.screenshot_similarity}.",
-          },
-      ],
-    )
-    return response["message"]["content"]
+    #response = ollama.chat(
+    #  model="llama3",
+    #  messages=[
+    #      {
+    #          "role": "user",
+    #          "content": f"Output the following in JSON format. Decide whether dom tree is phishing or not. {self.dom_tree}. If yes provide links and features as keys and relevant values. If no, provide a message saying not phishing. Also provide the logo, favicon and screenshot similarity scores. Logo: {self.logo_similarity}, Favicon: {self.favicon_similarity}, Screenshot: {self.screenshot_similarity}.",
+    #      },
+    #  ],
+    #)
+    #return response["message"]["content"]
+    return None
   
   # obtain final verdict
   def run(self):
     self.get_similar_whitelisted_urls()
     self.get_hashes()
     self.compare_hashes()
-    return self.ask_llama3()
-    
-if __name__ == "__main__":
-  url = input("Enter the URL: ")  
-  url_info = []
-  extractor = Extractor(url)
-  result = extractor.run()
-  brand = tldextract.extract(url).domain
-  result = json.loads(result)
-  result["Main page"]["brand"] = brand
-  url_info.append(result["Main page"])
-  for i, login_page in enumerate(result["Login pages"]):
-    result["Login pages"][i]["brand"] = brand
-    url_info.append(login_page)
-    
-  hashStorage = ImageHashingStorage(url_info)
-  urls_all_info = hashStorage.run()
-  
-  org_url_info = hashStorage.all_urls[0]
-  phishing_kit = PhishingKit(url, org_url_info)
-  pk_result = phishing_kit.run()
-  pk_result_dict = {}
-  pk_result_dict["phishing_kit_result"] = pk_result
-  
-  with open('phishing_kit_result.json', 'w') as json_file:
-      json.dump(pk_result_dict, json_file, indent=4)
+    # return self.ask_llama3()
+    result = {
+      "tested_url_logo_hash": self.logo_hash,
+      "tested_url_favicon_hash": self.favicon_hash,
+      "tested_url_screenshot_hash": self.screenshot_hash,
+      "whitelisted_url": self.whitelisted_url,
+      "whitelisted_url_logo_hash": self.whitelisted_logo_hash,
+      "whitelisted_url_favicon_hash": self.whitelisted_favicon_hash,
+      "whitelisted_url_screenshot_hash": self.whitelisted_screenshot_hash,
+      "logo_similarity": self.logo_similarity,
+      "favicon_similarity": self.favicon_similarity,
+      "screenshot_similarity": self.screenshot_similarity
+    }
+    return json.dumps(result, indent=4)
 
