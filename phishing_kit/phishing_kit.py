@@ -7,8 +7,13 @@ from bs4 import BeautifulSoup
 class PhishingKit:
   
   # obtain the hashes of the logo, favicon and screenshot
-  def __init__(self, url, url_info):
+  def __init__(self, url):
     self.url = url
+    stripped_url = self.url.replace("/", "")
+    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    s3.download_file('tested-urls-images', f'{stripped_url}.json', f'/tmp/{stripped_url}.json')
+    with open(f'/tmp/{stripped_url}.json', 'r') as file:
+      url_info = json.load(file)
     self.logo_hash = url_info["hash_logo"]
     self.favicon_hash = url_info["hash_favicon"]
     self.screenshot_hash = url_info["hash_screenshot"]
@@ -30,7 +35,8 @@ class PhishingKit:
     dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
     response = dyanmo.Table('ddb-htx-le-devizapp-imagehashes').scan()
     all_urls = [item["url"] for item in response['Items'] if "url" in item]
-    best_match_url = None
+    print(all_urls)
+    best_match_url = all_urls[0]
     best_match_score = 0
     for url in all_urls:
       score = fuzz.ratio(url, self.url)
@@ -41,9 +47,9 @@ class PhishingKit:
   
   # get hashes from dynamo db
   def get_hashes(self):
-    dyanmo = boto3.resource(service_name='dynamodb')
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    response = url_table.get_item(Key={'url': self.whitelisted_url})
+    response = url_table.get_item(Key={'url': str(self.whitelisted_url)})
     self.whitelisted_logo_hash = response["Item"]["hash_logo"]
     self.whitelisted_favicon_hash = response["Item"]["hash_favicon"]
     self.whitelisted_screenshot_hash = response["Item"]["hash_screenshot"]
@@ -92,7 +98,9 @@ class PhishingKit:
     self.get_hashes()
     self.compare_hashes()
     # return self.ask_llama3()
+    stripped_url = self.url.replace("/", "")
     result = {
+      "tested_url": self.url,
       "tested_url_logo_hash": self.logo_hash,
       "tested_url_favicon_hash": self.favicon_hash,
       "tested_url_screenshot_hash": self.screenshot_hash,
@@ -104,5 +112,11 @@ class PhishingKit:
       "favicon_similarity": self.favicon_similarity,
       "screenshot_similarity": self.screenshot_similarity
     }
+    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    s3.put_object(
+      Bucket='phishing-kit-result',
+      Key=f'{stripped_url}.json',
+      Body=json.dumps(result),
+      ContentType='application/json'
+    )
     return json.dumps(result, indent=4)
-

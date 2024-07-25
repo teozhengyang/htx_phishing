@@ -1,43 +1,59 @@
-from extractor import Extractor
-from extractor.extractor_lambda import Extractor
-from image_hashing_storage import ImageHashingStorage
-from phishing_kit import PhishingKit
 import json
-import tldextract
+import boto3
+from phishing_kit import PhishingKit
+
+# Define the client to interact with AWS Lambda
+client = boto3.client('lambda')
 
 def lambda_handler(event, context):
-    url = event.get('url')
-    if not url:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('URL not provided')
-        }
-
-    url_info = []
-    extractor = Extractor(url)
-    result = extractor.run()
-    brand = tldextract.extract(url).domain
-    result = json.loads(result)
-    result["Main page"]["brand"] = brand
-    url_info.append(result["Main page"])
-    for i, login_page in enumerate(result["Login pages"]):
-      result["Login pages"][i]["brand"] = brand
-      url_info.append(login_page)
-      
-    hashStorage = ImageHashingStorage(url_info)
-    hashStorage.run()
+    url = event.get("url")
+    storage = event.get("storage")
     
-    org_url_info = hashStorage.all_urls[0]
-    phishing_kit = PhishingKit(url, org_url_info)
-    pk_result = phishing_kit.run()
-    pk_result_dict = {}
-    pk_result_dict["phishing_kit_result"] = pk_result
-    pk_result_json = json.dumps(pk_result_dict)
-    
-    with open('phishing_kit_result.json', 'w') as json_file:
-        json.dump(pk_result_dict, json_file, indent=4)
-        
-    return {
-        'statusCode': 200,
-        'body': pk_result_json
+    extractor_input = {
+        "url": url,
+        "storage": storage
     }
+        
+    response = client.invoke(
+        FunctionName = 'arn:aws:lambda:ap-southeast-1:693164956686:function:extractor',
+        InvocationType = 'RequestResponse',
+        Payload = json.dumps(extractor_input)
+    )
+
+     # Read the streaming body
+    response_payload = response['Payload'].read()
+
+    # Parse the JSON response
+    response_dict = json.loads(response_payload)
+
+    response_body = response_dict['body']
+    
+    storage_input = {
+        "all_urls_info": response_body,
+        "storage": storage
+    }
+    
+    response = client.invoke(
+        FunctionName = 'arn:aws:lambda:ap-southeast-1:693164956686:function:storage',
+        InvocationType = 'RequestResponse',
+        Payload = json.dumps(storage_input)
+    )
+    
+    # Read the streaming body
+    response_payload = response['Payload'].read()
+    response_dict = json.loads(response_payload)
+    response_body = response_dict['body']
+    if storage:
+        return {
+            "statusCode": 200,
+            "body": json.dumps("Successfully stored data")
+        }
+    
+    phishing_kit = PhishingKit(url)
+    result = phishing_kit.run()
+    
+    return {
+        "statusCode": 200,
+        "body": result
+    }
+    
