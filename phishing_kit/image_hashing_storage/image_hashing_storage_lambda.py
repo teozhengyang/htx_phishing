@@ -1,21 +1,15 @@
 import base64
 import boto3
-import cairosvg
 import imagehash
 import io
 import json
 import numpy as np
 import onnxruntime
+import re
 import requests
-import tempfile
 import tldextract
 from PIL import Image
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from models.PhishIntention.phishintention import PhishIntentionWrapper
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from extractor_lambda import Extractor
-from extractor_lambda import lambda_handler as extractor_lambda_handler
 
 urls_ministries =["http://www.mci.gov.sg", "http://www.mccy.gov.sg", "http://www.mindef.gov.sg", "http://www.moe.gov.sg", 
                     "http://www.mof.gov.sg", "http://www.mfa.gov.sg", "http://www.moh.gov.sg", "http://www.mha.gov.sg", 
@@ -47,68 +41,80 @@ urls_others = ["https://www.google.com", "https://www.facebook.com", "https://ww
                  "https://www.posb.com.sg"
                 ]
 
-s3_client = boto3.client('s3')
-
 def lambda_handler(event, context):
-  url = event.get('url')
+  all_urls_info = event.get('all_urls_info')
   storage = event.get('storage')
-  whitelisted = event.get('whitelisted')
-    
-  if not url:
-    return {
-      'statusCode': 400,
-      'body': json.dumps('URL not provided')
-    }
-    
-  # purely extract
-  if not storage:
-    extractor_lambda_handler(event, context)
+
+  result_dict = json.loads(all_urls_info)
 
   main_login_url_info = []
-  extractor = Extractor(url, whitelisted)
-  result = extractor.run()
-  result_dict = json.loads(result)
-
+  all_results_json = []
+  
   main_login_url_info.append(result_dict["Main page"])
-  for i, login_page in enumerate(result_dict["Login pages"]):
+  for _, login_page in enumerate(result_dict["Login pages"]):
     main_login_url_info.append(login_page)
       
   for url_info in main_login_url_info:
-    hashStorage = ImageHashingStorage(url_info, whitelisted)
-    result = hashStorage.run()
-    results_json = json.dumps(result)
-    if whitelisted:
-      try:
-        bucket_name = 'whitelisted-urls-images'
-        object_name = f'{url_info["url"]}.json'
-        s3_client.put_object(
-          Bucket=bucket_name,
-          Key=object_name,
-          Body=results_json,
-          ContentType='application/json'
-        )   
-      except Exception as e:
+    hash_storage = ImageHashingStorage(url_info, storage)
+    stripped_url = url_info["url"].replace("/", "")
+    result = hash_storage.run()
+    data = {
+      "url": result["url"],
+      "brand": result["brand"],
+      "encoding_logo": result["encoding_logo"],
+      "encoding_favicon": result["encoding_favicon"],
+      "encoding_screenshot": result["encoding_screenshot"],
+      "hash_logo": result["hash_logo"],
+      "hash_favicon": result["hash_favicon"],
+      "hash_screenshot": result["hash_screenshot"]
+    }
+    all_results_json.append(result)
+    
+    if storage:
+      try: 
+        s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+        s3.put_object(
+            Bucket='whitelisted-urls-images',
+            Key=f'{stripped_url}.json',
+            Body=json.dumps(data),
+            ContentType='application/json'
+          )
+      except:
         return {
           'statusCode': 500,
-          'body': json.dumps(f'Error storing JSON result for website {url_info["url"]}')
+          'body': json.dumps(f'Error storing relevant hashes of {url_info["url"]} in S3')
         }
-        
+    if not storage:
+      try:
+        s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+        s3.put_object(
+            Bucket='tested-urls-images',
+            Key=f'{stripped_url}.json',
+            Body=json.dumps(data),
+            ContentType='application/json'
+          )
+      except:
+        return {
+          'statusCode': 500,
+          'body': json.dumps(f'Error storing relevant hashes of {url_info["url"]} in S3')
+        }
   return {
     'statusCode': 200,
-    'body': results_json
+    'body': json.dumps(all_results_json)
   }
+        
         
 class ImageHashingStorage:
   
-  def __init__(self, url_info, whitelisted):
+  def __init__(self, url_info, storage):
     self.url_info = url_info
+    self.storage = storage
     self.phishintention_cls = PhishIntentionWrapper()
-    self.whitelisted = whitelisted
       
   # use detectron v2 model to get logo from screenshot
   def encode_logo_from_screenshot(self, screenshot_path):
     self.phishintention_cls.test_orig_phishintention(screenshot_path)
-    with open("logo.png", "rb") as file:
+    with open("/tmp/logo.png", "rb") as file:
       data = file.read()
       encoded_data = base64.b64encode(data).decode('utf-8')
     self.url_info["encoding_logo"] = encoded_data
@@ -121,11 +127,8 @@ class ImageHashingStorage:
         response = requests.get(logo_url)
         response.raise_for_status()
         data = response.content
-        if logo_url.endswith(".svg"):
-          image = cairosvg.svg2png(bytestring=data)
-        else:
-          image = data
-        with open("logo.png", "wb") as file:
+        image = data
+        with open("/tmp/logo.png", "wb") as file:
           file.write(image)
         encoded_data = base64.b64encode(image).decode('utf-8')
         self.url_info["encoding_logo"] = encoded_data
@@ -142,11 +145,8 @@ class ImageHashingStorage:
         response = requests.get(favicon_url)
         response.raise_for_status()
         data = response.content
-        if favicon_url.endswith(".svg"):
-          image = cairosvg.svg2png(bytestring=data)
-        else:
-          image = data
-        with open("favicon.ico", "wb") as file:
+        image = data
+        with open("/tmp/favicon.ico", "wb") as file:
           file.write(image)
         encoded_data = base64.b64encode(image).decode('utf-8')
         self.url_info["encoding_favicon"] = encoded_data
@@ -158,118 +158,17 @@ class ImageHashingStorage:
     
   # encode logo, favicon and screenshots
   def encode_logo_favicon_screenshots(self):
-    
-    # customisation of options
-    LOCAL_DL_PATH = ""
-    def mkdtemp():
-      tempfile.mkdtemp()
-    
-    chrome_options = ChromeOptions()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--disable-dev-tools")
-    chrome_options.add_argument("--no-zygote")
-    chrome_options.add_argument("--single-process")
-    chrome_options.add_argument(f"--user-data-dir={mkdtemp()}")
-    chrome_options.add_argument(f"--data-path={mkdtemp()}")
-    chrome_options.add_argument(f"--disk-cache-dir={mkdtemp()}")
-    chrome_options.add_argument("--remote-debugging-pipe")
-    chrome_options.add_argument("--verbose")
-    chrome_options.add_argument("--log-path=/tmp")
-    chrome_options.add_argument("--window-size=1280x1696")
-    chrome_options.add_experimental_option("prefs", {
-      "download.prompt_for_download": False,
-      "download.directory_upgrade": True,
-      "safebrowsing.enabled": False
-    })
-    chrome_options.binary_location = "/opt/chrome/chrome-linux64/chrome"
-
-    service = Service(
-        executable_path="/opt/chrome-driver/chromedriver-linux64/chromedriver",
-        service_log_path="/tmp/chromedriver.log"
-    )
-
-    driver = webdriver.Chrome(
-        service=service,
-        options=chrome_options
-    )
-    driver.execute_script(""" 
-                // Function to remove elements by selector 
-                function removeElementsBySelector(selector) { 
-                    var elements = document.querySelectorAll(selector); 
-                    elements.forEach(function(element) { 
-                        element.remove(); 
-                    }); 
-                } 
- 
-                // Common ad and video elements selectors 
-                var adAndVideoSelectors = [ 
-                    'video',  // Remove all video tags 
-                    'iframe',  // Remove all iframe tags (often used for embedded ads and videos) 
-                    '.advertisement',  
-                    '.ad',  
-                    '.ads',  
-                    '.ad-container',  
-                    '.ad-banner', 
-                    '.ad-block',  
-                    '.ad-wrapper',  
-                    '.ad-embed',  
-                    '.sponsored', 
-                    '[class*="ad"]',  // Elements with 'ad' in the class name 
-                    '[id*="ad"]',  // Elements with 'ad' in the ID 
-                    '[class*="banner"]',  // Elements with 'banner' in the class name 
-                    '[id*="banner"]',  // Elements with 'banner' in the ID 
-                    '.popup',  
-                    '.modal',  
-                    '.carousel',  
-                    '.slider', 
-                    '[data-ad]',  // Elements with data attributes related to ads 
-                    '[data-video]',  // Elements with data attributes related to videos 
-                    '[data-dynamic]', 
-                    '.sponsored-content', 
-                    '.sponsored-link', 
-                    '.promoted',  // Promoted content or links 
-                    '.promo',  // Promotional content or links 
-                    '.ad-slot', 
-                    '.adsbygoogle' 
-                ]; 
- 
-                // Remove all identified ad and video elements 
-                adAndVideoSelectors.forEach(function(selector) { 
-                    removeElementsBySelector(selector); 
-                }); 
- 
-                // Handling any ads or videos added dynamically after page load 
-                var observer = new MutationObserver(function(mutations) { 
-                    mutations.forEach(function(mutation) { 
-                        if (mutation.addedNodes) { 
-                            mutation.addedNodes.forEach(function(node) { 
-                                if (node.nodeType === 1) {  // Check if it's an element node 
-                                    adAndVideoSelectors.forEach(function(selector) { 
-                                        if (node.matches(selector)) { 
-                                            node.remove(); 
-                                        } 
-                                    }); 
-                                } 
-                            }); 
-                        } 
-                    }); 
-                }); 
- 
-                // Observe changes to the body element and its children 
-                observer.observe(document.body, { childList: true, subtree: true }); 
-            """)
-    
-    driver.get(self.url_info["url"])
-    screenshot = driver.get_screenshot_as_png()
+    stripped_url = self.url_info["url"].replace("/", "")
+    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    s3.download_file('extractor-result', f'{stripped_url}-screenshot.png', '/tmp/screenshot.png')
+    screenshot = Image.open('/tmp/screenshot.png')
+    buf = io.BytesIO()
+    screenshot.save(buf, format="PNG")
+    screenshot = buf.getvalue()
     encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
     self.url_info["encoding_screenshot"] = encoded_screenshot
-    with open("screenshot.png", "wb") as file:
-      file.write(screenshot)
     
-    self.encode_logo("screenshot.png")
+    self.encode_logo("/tmp/screenshot.png")
     self.encode_favicon()
   
   # load neural hash model
@@ -313,16 +212,29 @@ class ImageHashingStorage:
     self.url_info["hash_screenshot"] = str(screenshot_hash)
     
   # store encodings and hashes in db
-  def store_logo_images_favicon_screenshots(self):
-    if self.whitelisted:
-      brand = tldextract.extract(self.url_info["url"]).domain
-      self.url_info["brand"] = brand  
-      dyanmo = boto3.resource(service_name='dynamodb')
-      url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-      url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+  def store_whitelisted_logo_images_favicon_screenshots(self):
+    brand = tldextract.extract(self.url_info["url"]).domain
+    self.url_info["brand"] = brand  
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
+    url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
 
+  def store_tested_logo_images_favicon_screenshots(self):
+    brand = tldextract.extract(self.url_info["url"]).domain
+    self.url_info["brand"] = brand  
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
+    url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+  
   def run(self):
-    self.encode_logo_favicon_screenshots()
-    self.hash_logo_favicon_screenshots()
-    self.store_logo_images_favicon_screenshots()
-    return self.url_info
+    if self.storage:    
+      self.encode_logo_favicon_screenshots()
+      self.hash_logo_favicon_screenshots()
+      self.store_whitelisted_logo_images_favicon_screenshots()
+      return self.url_info
+    else: 
+      self.encode_logo_favicon_screenshots()
+      self.hash_logo_favicon_screenshots()
+      self.store_tested_logo_images_favicon_screenshots()
+      return self.url_info
+  

@@ -1,13 +1,8 @@
 import boto3
-import os
 import requests
 import json
-import tldextract
-from dotenv import load_dotenv
-from image_hashing_storage.image_hashing_storage_lambda import ImageHashingStorage
 from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
-from extractor.extractor_lambda import Extractor
 
 class PhishingKit:
   
@@ -32,11 +27,8 @@ class PhishingKit:
   
   # get most similar whitelisted urls with url
   def get_similar_whitelisted_urls(self):
-    load_dotenv()
-    access_key = os.getenv("access_key")
-    secret_access_key = os.getenv("secret_access_key")
-    dyanmo = boto3.resource(service_name='dynamodb', region_name='ap-southeast-1', aws_access_key_id=access_key, aws_secret_access_key=secret_access_key)
-    response = dyanmo.Table('htx_phishing').scan()
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    response = dyanmo.Table('ddb-htx-le-devizapp-imagehashes').scan()
     all_urls = [item["url"] for item in response['Items'] if "url" in item]
     best_match_url = None
     best_match_score = 0

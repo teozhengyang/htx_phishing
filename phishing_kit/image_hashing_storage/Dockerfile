@@ -1,21 +1,27 @@
-FROM amazon/aws-lambda-python:3.9
+FROM amazon/aws-lambda-python:3.8
 
-# Install chrome dependencies
-RUN yum install -y atk cups-libs gtk3 libXcomposite alsa-lib \
-    libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
-    libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
-    xorg-x11-xauth dbus-glib dbus-glib-devel nss mesa-libgbm jq unzip
-RUN yum install -y zlib-devel libjpeg-devel gcc make glibc-devel git
+RUN yum install -y nano git build-essential libglib2.0-0 libsm6 libxext6 libxrender-dev python3 python3-pip python3-opencv wget cmake ffmpeg libgl1
 
-# Copy and run the chrome installer script
-COPY ./chrome-installer.sh ./chrome-installer.sh
+# Detectron2 prerequisites
+RUN pip install -U torch==1.8.1+cpu torchvision==0.9.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# Detectron2 - CPU
+RUN pip install -U detectron2 -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.8/index.html
+RUN pip install -U cython \
+	flask \
+	flask-cors \
+	requests \
+	opencv-python-headless \
+	Image \
+	piexif \
+	textblob \
+	pyyaml \
+	numpy \
+;
+
 COPY ./requirements.txt ./requirements.txt
-COPY ./extractor_lambda.py ./extractor_lambda.py
 COPY ./models ./models
-RUN chmod +x ./chrome-installer.sh
-RUN ./chrome-installer.sh
-RUN rm ./chrome-installer.sh
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy the main application code
 COPY image_hashing_storage_lambda.py ./

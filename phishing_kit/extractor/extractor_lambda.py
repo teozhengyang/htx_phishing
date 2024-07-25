@@ -1,22 +1,23 @@
 import boto3
 import json
 import re
-import tempfile
+import requests
+from tempfile import mkdtemp
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
 
 def lambda_handler(event, context):
     url = event.get('url')
+    storage = event.get('storage')
     if not url:
         return {
             'statusCode': 400,
             'body': json.dumps('URL not provided')
         }
 
-    extractor = Extractor(url)
+    extractor = Extractor(url, storage)
     result = extractor.run()
     return {
         'statusCode': 200,
@@ -25,16 +26,13 @@ def lambda_handler(event, context):
 
 class Extractor:
   
-  def __init__(self, main_url):
+  def __init__(self, main_url, storage):
     self.main_url = main_url
+    self.storage = storage  
     
     self.main_url_name = re.sub("^(https?\:\/\/)?(www\.)?", "", main_url)
     self.main_url_name = self.main_url_name.rstrip("/")
     
-    # customisation of options
-    LOCAL_DL_PATH = ""
-    def mkdtemp():
-      tempfile.mkdtemp()
     
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless=new")
@@ -50,7 +48,9 @@ class Extractor:
     chrome_options.add_argument("--remote-debugging-pipe")
     chrome_options.add_argument("--verbose")
     chrome_options.add_argument("--log-path=/tmp")
-    chrome_options.add_argument("--window-size=1280x1696")
+    chrome_options.add_argument("enable-automation")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--dns-prefetch-disable")
     chrome_options.binary_location = "/opt/chrome/chrome-linux64/chrome"
 
     service = Service(
@@ -62,6 +62,73 @@ class Extractor:
         service=service,
         options=chrome_options
     )
+    
+    self.driver.execute_script(""" 
+                // Function to remove elements by selector 
+                function removeElementsBySelector(selector) { 
+                    var elements = document.querySelectorAll(selector); 
+                    elements.forEach(function(element) { 
+                        element.remove(); 
+                    }); 
+                } 
+ 
+                // Common ad and video elements selectors 
+                var adAndVideoSelectors = [ 
+                    'video',  // Remove all video tags 
+                    'iframe',  // Remove all iframe tags (often used for embedded ads and videos) 
+                    '.advertisement',  
+                    '.ad',  
+                    '.ads',  
+                    '.ad-container',  
+                    '.ad-banner', 
+                    '.ad-block',  
+                    '.ad-wrapper',  
+                    '.ad-embed',  
+                    '.sponsored', 
+                    '[class*="ad"]',  // Elements with 'ad' in the class name 
+                    '[id*="ad"]',  // Elements with 'ad' in the ID 
+                    '[class*="banner"]',  // Elements with 'banner' in the class name 
+                    '[id*="banner"]',  // Elements with 'banner' in the ID 
+                    '.popup',  
+                    '.modal',  
+                    '.carousel',  
+                    '.slider', 
+                    '[data-ad]',  // Elements with data attributes related to ads 
+                    '[data-video]',  // Elements with data attributes related to videos 
+                    '[data-dynamic]', 
+                    '.sponsored-content', 
+                    '.sponsored-link', 
+                    '.promoted',  // Promoted content or links 
+                    '.promo',  // Promotional content or links 
+                    '.ad-slot', 
+                    '.adsbygoogle' 
+                ]; 
+ 
+                // Remove all identified ad and video elements 
+                adAndVideoSelectors.forEach(function(selector) { 
+                    removeElementsBySelector(selector); 
+                }); 
+ 
+                // Handling any ads or videos added dynamically after page load 
+                var observer = new MutationObserver(function(mutations) { 
+                    mutations.forEach(function(mutation) { 
+                        if (mutation.addedNodes) { 
+                            mutation.addedNodes.forEach(function(node) { 
+                                if (node.nodeType === 1) {  // Check if it's an element node 
+                                    adAndVideoSelectors.forEach(function(selector) { 
+                                        if (node.matches(selector)) { 
+                                            node.remove(); 
+                                        } 
+                                    }); 
+                                } 
+                            }); 
+                        } 
+                    }); 
+                }); 
+ 
+                // Observe changes to the body element and its children 
+                observer.observe(document.body, { childList: true, subtree: true }); 
+            """)
     
     self.login_urls = []
     self.result = {
@@ -165,20 +232,82 @@ class Extractor:
   # insert data for main page
   def insert_main_data(self):
     self.driver.get(self.main_url)
+    
     self.result["Main page"]["url"] = self.main_url
     self.result["Main page"]["js"] = self.get_js_scripts()
     self.result["Main page"]["files"] = self.get_files()
     self.result["Main page"]["logo"] = self.get_logo()
     self.result["Main page"]["favicon"] = self.get_favicon()
-
+    
+    main_url_stripped = self.main_url.replace("/", "") 
+    
+    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    
+    screenshot = self.driver.get_screenshot_as_png()
+    
+    s3.put_object(
+      Bucket='extractor-result',
+      Key=f'{main_url_stripped}-screenshot.png',
+      Body=screenshot,
+      ContentType='image/png'
+    )
+    
+    if self.result["Main page"]["logo"]:
+      logo = requests.get(self.result["Main page"]["logo"]).content
+      s3.put_object(
+        Bucket='extractor-result',
+        Key=f'{main_url_stripped}-logo.png',
+        Body=logo,
+        ContentType='image/png'
+      )
+    
+    if self.result["Main page"]["favicon"]:
+      favicon = requests.get(self.result["Main page"]["favicon"]).content
+      s3.put_object(
+        Bucket='extractor-result',
+        Key=f'{main_url_stripped}-favicon.ico',
+        Body=favicon,
+        ContentType='image/x-icon'
+      )
+    
   # insert data for login pages
   def insert_login_data(self):
     self.get_login_pages()
     for page in self.result["Login pages"]:
+      self.driver.get(page["url"])
+      login_url_stripped = page["url"].replace("/", "")
       page["js"] = self.get_js_scripts()
       page["files"] = self.get_files()
       page["logo"] = self.get_logo()
       page["favicon"] = self.get_favicon()
+      s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    
+      screenshot = self.driver.get_screenshot_as_png()
+      
+      s3.put_object(
+        Bucket='extractor-result',
+        Key=f'{login_url_stripped}-screenshot.png',
+        Body=screenshot,
+        ContentType='image/png'
+      )
+      
+      if page["logo"]:
+        logo = requests.get(page["logo"]).content
+        s3.put_object(
+          Bucket='extractor-result',
+          Key=f'{login_url_stripped}-logo.png',
+          Body=logo,
+          ContentType='image/png'
+        )
+      
+      if page["favicon"]:
+        favicon = requests.get(page["favicon"]).content
+        s3.put_object(
+          Bucket='extractor-result',
+          Key=f'{login_url_stripped}-favicon.ico',
+          Body=favicon,
+          ContentType='image/x-icon'
+        )
   
   def run(self):
     # extract main page data
@@ -190,10 +319,10 @@ class Extractor:
     # close the driver
     self.driver.close()
     
-    main_url_name = self.main_url_name
-    table_name = "extractor_result"
-    table = boto3.resource('dynamodb').Table(table_name)
-    table.put_item(Item={'stripped_url': main_url_name, 'result': self.result})
-    print(f"{main_url_name} inserted into DynamoDB")
+    if self.storage:
+      main_url_name = self.main_url_name
+      table_name = "extractor_result"
+      table = boto3.resource('dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1").Table(table_name)
+      table.put_item(Item={'stripped_url': main_url_name, 'result': self.result})
     
     return json.dumps(self.result)

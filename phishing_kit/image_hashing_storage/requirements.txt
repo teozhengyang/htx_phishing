@@ -1,6 +1,6 @@
 scipy
 tldextract
-opencv-python
+opencv-python-headless
 pandas
 numpy
 tqdm
@@ -21,10 +21,8 @@ hyperframe
 selenium==4.0.0
 selenium-wire
 boto3
-cairosvg
 imagehash
 numpy
 onnxruntime
 requests
-webdriver-manager
 torch

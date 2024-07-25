@@ -1,4 +1,5 @@
-FROM amazon/aws-lambda-python:3.12
+FROM public.ecr.aws/lambda/python:3.12
+
 # Install chrome dependencies
 RUN dnf install -y atk cups-libs gtk3 libXcomposite alsa-lib \
     libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
@@ -11,6 +12,7 @@ RUN ./chrome-installer.sh
 RUN rm ./chrome-installer.sh
 # Install selenium
 RUN pip install selenium
+RUN pip install requests
 # Copy the main application code
 COPY extractor_lambda.py ./
 # Command to run the Lambda function
