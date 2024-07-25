@@ -49,10 +49,6 @@ For local chromedriver options use the following code:
 For docker chromedriver options use the following code:
 
 ```python
-# customisation of options
-    LOCAL_DL_PATH = ""
-    def mkdtemp():
-      tempfile.mkdtemp()
     
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless=new")
