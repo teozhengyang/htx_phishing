@@ -5,9 +5,10 @@ import io
 import json
 import numpy as np
 import onnxruntime
-import re
 import requests
 import tldextract
+import hashlib
+from datetime import datetime
 from PIL import Image
 from models.PhishIntention.phishintention import PhishIntentionWrapper
 
@@ -66,10 +67,9 @@ def lambda_handler(event, context):
       "encoding_screenshot": result["encoding_screenshot"],
       "hash_logo": result["hash_logo"],
       "hash_favicon": result["hash_favicon"],
-      "hash_screenshot": result["hash_screenshot"]
+      "hash_screenshot": result["hash_screenshot"],
     }
-    all_results_json.append(result)
-    
+
     if storage:
       try: 
         s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
@@ -79,6 +79,7 @@ def lambda_handler(event, context):
             Body=json.dumps(data),
             ContentType='application/json'
           )
+        all_results_json.append(data)
       except:
         return {
           'statusCode': 500,
@@ -93,11 +94,27 @@ def lambda_handler(event, context):
             Body=json.dumps(data),
             ContentType='application/json'
           )
+        all_results_json.append(data)
       except:
         return {
           'statusCode': 500,
           'body': json.dumps(f'Error storing relevant hashes of {url_info["url"]} in S3')
         }
+  
+  stripped_url = main_login_url_info[0]["url"].replace("/", "") 
+  s3_content = f'{stripped_url}.json'
+  s3_hash_object = hashlib.sha256(s3_content.encode('utf-8'))  
+  s3_hex_dig = s3_hash_object.hexdigest()
+  db_content = stripped_url
+  db_hash_object = hashlib.sha256(db_content.encode('utf-8'))  
+  db_hex_dig = db_hash_object.hexdigest()
+  identifier = {
+    "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+    "s3_id": s3_hex_dig,
+    "db_id": db_hex_dig
+  }
+  all_results_json.append(identifier)
+  
   return {
     'statusCode': 200,
     'body': json.dumps(all_results_json)

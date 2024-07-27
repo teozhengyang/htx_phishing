@@ -1,8 +1,10 @@
 import boto3
+import hashlib
 import requests
 import json
-from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
+from datetime import datetime
+from fuzzywuzzy import fuzz
 
 class PhishingKit:
   
@@ -119,4 +121,9 @@ class PhishingKit:
       Body=json.dumps(result),
       ContentType='application/json'
     )
+    result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    s3_content = f'{stripped_url}.json'
+    s3_hash_object = hashlib.sha256(s3_content.encode('utf-8'))  
+    s3_hex_dig = s3_hash_object.hexdigest()
+    result["s3_id"] = s3_hex_dig
     return json.dumps(result, indent=4)

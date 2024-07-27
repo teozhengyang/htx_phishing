@@ -1,7 +1,9 @@
 import boto3
+import hashlib
 import json
 import re
 import requests
+from datetime import datetime
 from tempfile import mkdtemp
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -245,6 +247,11 @@ class Extractor:
     
     screenshot = self.driver.get_screenshot_as_png()
     
+    content = f'{main_url_stripped}-screenshot.png'
+    hash_object = hashlib.sha256(content.encode('utf-8'))  
+    hex_dig = hash_object.hexdigest()
+    self.result["Main page"]["s3_screenshot_id"] = hex_dig
+    
     s3.put_object(
       Bucket='extractor-result',
       Key=f'{main_url_stripped}-screenshot.png',
@@ -254,6 +261,10 @@ class Extractor:
     
     if self.result["Main page"]["logo"]:
       logo = requests.get(self.result["Main page"]["logo"]).content
+      content = f'{main_url_stripped}-logo.png'
+      hash_object = hashlib.sha256(content.encode('utf-8'))  
+      hex_dig = hash_object.hexdigest()
+      self.result["Main page"]["s3_logo_id"] = hex_dig
       s3.put_object(
         Bucket='extractor-result',
         Key=f'{main_url_stripped}-logo.png',
@@ -263,6 +274,10 @@ class Extractor:
     
     if self.result["Main page"]["favicon"]:
       favicon = requests.get(self.result["Main page"]["favicon"]).content
+      content = f'{main_url_stripped}-favicon.ico'
+      hash_object = hashlib.sha256(content.encode('utf-8'))  
+      hex_dig = hash_object.hexdigest()
+      self.result["Main page"]["s3_favicon_id"] = hex_dig
       s3.put_object(
         Bucket='extractor-result',
         Key=f'{main_url_stripped}-favicon.ico',
@@ -281,6 +296,10 @@ class Extractor:
       page["logo"] = self.get_logo()
       page["favicon"] = self.get_favicon()
       s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+      content = f'{login_url_stripped}-screenshot.png'
+      hash_object = hashlib.sha256(content.encode('utf-8'))  
+      hex_dig = hash_object.hexdigest()
+      page["s3_screenshot_id"] = hex_dig
     
       screenshot = self.driver.get_screenshot_as_png()
       
@@ -293,6 +312,10 @@ class Extractor:
       
       if page["logo"]:
         logo = requests.get(page["logo"]).content
+        content = f'{login_url_stripped}-logo.png'
+        hash_object = hashlib.sha256(content.encode('utf-8'))  
+        hex_dig = hash_object.hexdigest()
+        page["s3_logo_id"] = hex_dig
         s3.put_object(
           Bucket='extractor-result',
           Key=f'{login_url_stripped}-logo.png',
@@ -302,6 +325,10 @@ class Extractor:
       
       if page["favicon"]:
         favicon = requests.get(page["favicon"]).content
+        content = f'{login_url_stripped}-favicon-ico'
+        hash_object = hashlib.sha256(content.encode('utf-8'))  
+        hex_dig = hash_object.hexdigest()
+        page["s3_favicon_id"] = hex_dig
         s3.put_object(
           Bucket='extractor-result',
           Key=f'{login_url_stripped}-favicon.ico',
@@ -325,4 +352,5 @@ class Extractor:
       table = boto3.resource('dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1").Table(table_name)
       table.put_item(Item={'stripped_url': main_url_name, 'result': self.result})
     
+    self.result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return json.dumps(self.result)

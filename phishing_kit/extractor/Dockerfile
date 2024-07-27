@@ -13,6 +13,7 @@ RUN rm ./chrome-installer.sh
 # Install selenium
 RUN pip install selenium
 RUN pip install requests
+RUN pip install datetime
 # Copy the main application code
 COPY extractor_lambda.py ./
 # Command to run the Lambda function
