@@ -12,7 +12,7 @@ class PhishingKit:
   def __init__(self, url):
     self.url = url
     stripped_url = self.url.replace("/", "")
-    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    s3 = boto3.client('s3')
     s3.download_file('tested-urls-images', f'{stripped_url}.json', f'/tmp/{stripped_url}.json')
     with open(f'/tmp/{stripped_url}.json', 'r') as file:
       url_info = json.load(file)
@@ -34,7 +34,7 @@ class PhishingKit:
   
   # get most similar whitelisted urls with url
   def get_similar_whitelisted_urls(self):
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    dyanmo = boto3.resource(service_name='dynamodb')
     response = dyanmo.Table('ddb-htx-le-devizapp-imagehashes').scan()
     all_urls = [item["url"] for item in response['Items'] if "url" in item]
     print(all_urls)
@@ -49,7 +49,7 @@ class PhishingKit:
   
   # get hashes from dynamo db
   def get_hashes(self):
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    dyanmo = boto3.resource(service_name='dynamodb')
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
     response = url_table.get_item(Key={'url': str(self.whitelisted_url)})
     self.whitelisted_logo_hash = response["Item"]["hash_logo"]
@@ -114,7 +114,7 @@ class PhishingKit:
       "favicon_similarity": self.favicon_similarity,
       "screenshot_similarity": self.screenshot_similarity
     }
-    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    s3 = boto3.client('s3')
     s3.put_object(
       Bucket='phishing-kit-result',
       Key=f'{stripped_url}.json',

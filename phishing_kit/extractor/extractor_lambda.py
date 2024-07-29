@@ -243,7 +243,7 @@ class Extractor:
     
     main_url_stripped = self.main_url.replace("/", "") 
     
-    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    s3 = boto3.client('s3')
     
     screenshot = self.driver.get_screenshot_as_png()
     
@@ -295,7 +295,7 @@ class Extractor:
       page["files"] = self.get_files()
       page["logo"] = self.get_logo()
       page["favicon"] = self.get_favicon()
-      s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+      s3 = boto3.client('s3')
       content = f'{login_url_stripped}-screenshot.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
@@ -349,7 +349,7 @@ class Extractor:
     if self.storage:
       main_url_name = self.main_url_name
       table_name = "extractor_result"
-      table = boto3.resource('dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1").Table(table_name)
+      table = boto3.resource('dynamodb').Table(table_name)
       table.put_item(Item={'stripped_url': main_url_name, 'result': self.result})
     
     self.result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")

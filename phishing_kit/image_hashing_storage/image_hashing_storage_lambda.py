@@ -72,7 +72,7 @@ def lambda_handler(event, context):
 
     if storage:
       try: 
-        s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+        s3 = boto3.client('s3')
         s3.put_object(
             Bucket='whitelisted-urls-images',
             Key=f'{stripped_url}.json',
@@ -87,7 +87,7 @@ def lambda_handler(event, context):
         }
     if not storage:
       try:
-        s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+        s3 = boto3.client('s3')
         s3.put_object(
             Bucket='tested-urls-images',
             Key=f'{stripped_url}.json',
@@ -176,7 +176,7 @@ class ImageHashingStorage:
   # encode logo, favicon and screenshots
   def encode_logo_favicon_screenshots(self):
     stripped_url = self.url_info["url"].replace("/", "")
-    s3 = boto3.client('s3', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="pvuTaW3wNQ8Y5f+YzlLvMa7WauutBVahw6qhos96", region_name="ap-southeast-1")
+    s3 = boto3.client('s3')
     s3.download_file('extractor-result', f'{stripped_url}-screenshot.png', '/tmp/screenshot.png')
     screenshot = Image.open('/tmp/screenshot.png')
     buf = io.BytesIO()
@@ -232,14 +232,14 @@ class ImageHashingStorage:
   def store_whitelisted_logo_images_favicon_screenshots(self):
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    dyanmo = boto3.resource(service_name='dynamodb')
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
     url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
 
   def store_tested_logo_images_favicon_screenshots(self):
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id="AKIA2CY6Z3QHIPGGY2TD", aws_secret_access_key="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", region_name="ap-southeast-1")
+    dyanmo = boto3.resource(service_name='dynamodb')
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
     url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
   
