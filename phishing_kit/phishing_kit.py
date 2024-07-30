@@ -1,5 +1,6 @@
 import boto3
 import hashlib
+import os
 import requests
 import json
 from bs4 import BeautifulSoup
@@ -9,17 +10,26 @@ from fuzzywuzzy import fuzz
 class PhishingKit:
   
   # obtain the hashes of the logo, favicon and screenshot
-  def __init__(self, url):
+  def __init__(self, url, error, id):
     self.url = url
-    stripped_url = self.url.replace("/", "")
-    s3 = boto3.client('s3')
-    s3.download_file('tested-urls-images', f'{stripped_url}.json', f'/tmp/{stripped_url}.json')
-    with open(f'/tmp/{stripped_url}.json', 'r') as file:
-      url_info = json.load(file)
-    self.logo_hash = url_info["hash_logo"]
-    self.favicon_hash = url_info["hash_favicon"]
-    self.screenshot_hash = url_info["hash_screenshot"]
-    self.dom_tree = self.get_dom_tree(url)
+    self.id = id
+    self.phishing_kit_result_s3 = os.environ["phishing_kit_result_s3"]
+    self.aws_access_key_id = os.environ["aws_access_key_id"]
+    self.aws_secret_access_key = os.environ["aws_secret_access_key"]
+    self.region_name = os.environ["region_name"]
+    
+    if not error:
+      self.whitelisted_images_hashes_db = os.environ["whitelisted_image_hashes_db"]
+      self.tested_url_images_s3 = os.environ["tested_url_images_s3"]
+      stripped_url = self.url.replace("/", "")
+      s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+      s3.download_file(self.tested_url_images_s3, f'{self.id}/{stripped_url}.json', f'/tmp/{stripped_url}.json')
+      with open(f'/tmp/{stripped_url}.json', 'r') as file:
+        url_info = json.load(file)
+      self.logo_hash = url_info["hash_logo"]
+      self.favicon_hash = url_info["hash_favicon"]
+      self.screenshot_hash = url_info["hash_screenshot"]
+      self.dom_tree = self.get_dom_tree(url)
   
   # get entire dom tree
   def get_dom_tree(self, url):
@@ -34,27 +44,31 @@ class PhishingKit:
   
   # get most similar whitelisted urls with url
   def get_similar_whitelisted_urls(self):
-    dyanmo = boto3.resource(service_name='dynamodb')
-    response = dyanmo.Table('ddb-htx-le-devizapp-imagehashes').scan()
-    all_urls = [item["url"] for item in response['Items'] if "url" in item]
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+    response = dyanmo.Table(self.whitelisted_images_hashes_db).scan()
+    all_urls = [item for item in response['Items'] if "url" in item]
     print(all_urls)
-    best_match_url = all_urls[0]
+    best_match_url = all_urls[0]["url"]
     best_match_score = 0
+    best_match_id = all_urls[0]["id"]
     for url in all_urls:
       score = fuzz.ratio(url, self.url)
       if score > best_match_score:
         best_match_score = score
         best_match_url = url
+        best_match_id = url["id"]
     self.whitelisted_url = best_match_url
+    self.whitelisted_id = best_match_id
   
   # get hashes from dynamo db
   def get_hashes(self):
-    dyanmo = boto3.resource(service_name='dynamodb')
-    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    response = url_table.get_item(Key={'url': str(self.whitelisted_url)})
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+    url_table = dyanmo.Table(self.whitelisted_images_hashes_db)
+    response = url_table.get_item(Key={'id': str(self.whitelisted_id)})
     self.whitelisted_logo_hash = response["Item"]["hash_logo"]
     self.whitelisted_favicon_hash = response["Item"]["hash_favicon"]
     self.whitelisted_screenshot_hash = response["Item"]["hash_screenshot"]
+    self.whitelisted_brand = response["Item"]["brand"]
     
   # compare hashes
   def compare_hashes(self):
@@ -112,12 +126,33 @@ class PhishingKit:
       "whitelisted_url_screenshot_hash": self.whitelisted_screenshot_hash,
       "logo_similarity": self.logo_similarity,
       "favicon_similarity": self.favicon_similarity,
-      "screenshot_similarity": self.screenshot_similarity
+      "screenshot_similarity": self.screenshot_similarity,
+      "result": f"match found for {self.whitelisted_brand}"
     }
-    s3 = boto3.client('s3')
+    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     s3.put_object(
-      Bucket='phishing-kit-result',
-      Key=f'{stripped_url}.json',
+      Bucket=self.phishing_kit_result_s3,
+      Key=f'{self.id}/{stripped_url}.json',
+      Body=json.dumps(result),
+      ContentType='application/json'
+    )
+    result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    s3_content = f'{stripped_url}.json'
+    s3_hash_object = hashlib.sha256(s3_content.encode('utf-8'))  
+    s3_hex_dig = s3_hash_object.hexdigest()
+    result["s3_id"] = s3_hex_dig
+    return json.dumps(result, indent=4)
+    
+  def run_error(self):
+    result = {
+        "tested_url": self.url,
+        "result": "Phishing kit did not run"
+      }
+    stripped_url = self.url.replace("/", "")
+    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+    s3.put_object(
+      Bucket=self.phishing_kit_result_s3,
+      Key=f'{self.id}/{stripped_url}.json',
       Body=json.dumps(result),
       ContentType='application/json'
     )

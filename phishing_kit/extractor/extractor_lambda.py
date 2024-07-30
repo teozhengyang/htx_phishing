@@ -2,6 +2,7 @@ import boto3
 import hashlib
 import json
 import re
+import os
 import requests
 from datetime import datetime
 from tempfile import mkdtemp
@@ -13,13 +14,15 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 def lambda_handler(event, context):
     url = event.get('url')
     storage = event.get('storage')
+    id = event.get('id')
+    
     if not url:
         return {
             'statusCode': 400,
             'body': json.dumps('URL not provided')
         }
 
-    extractor = Extractor(url, storage)
+    extractor = Extractor(url, storage, id)
     result = extractor.run()
     return {
         'statusCode': 200,
@@ -28,14 +31,14 @@ def lambda_handler(event, context):
 
 class Extractor:
   
-  def __init__(self, main_url, storage):
+  def __init__(self, main_url, storage, id):
     self.main_url = main_url
     self.storage = storage  
-    
-    self.main_url_name = re.sub("^(https?\:\/\/)?(www\.)?", "", main_url)
-    self.main_url_name = self.main_url_name.rstrip("/")
-    
-    
+    self.id = id
+    self.aws_access_key_id = os.environ["aws_access_key_id"]
+    self.aws_secret_access_key = os.environ["aws_secret_access_key"]
+    self.region_name = os.environ["region_name"]
+  
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
@@ -54,6 +57,11 @@ class Extractor:
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--dns-prefetch-disable")
     chrome_options.binary_location = "/opt/chrome/chrome-linux64/chrome"
+    chrome_options.add_experimental_option("prefs", {
+      "download.prompt_for_download": False,
+      "download.directory_upgrade": True,
+      "safebrowsing.enabled": False
+    })
 
     service = Service(
         executable_path="/opt/chrome-driver/chromedriver-linux64/chromedriver",
@@ -247,40 +255,40 @@ class Extractor:
     
     screenshot = self.driver.get_screenshot_as_png()
     
-    content = f'{main_url_stripped}-screenshot.png'
+    content = f'{self.id}/{main_url_stripped}-screenshot.png'
     hash_object = hashlib.sha256(content.encode('utf-8'))  
     hex_dig = hash_object.hexdigest()
     self.result["Main page"]["s3_screenshot_id"] = hex_dig
     
     s3.put_object(
       Bucket='extractor-result',
-      Key=f'{main_url_stripped}-screenshot.png',
+      Key=f'{self.id}/{main_url_stripped}-screenshot.png',
       Body=screenshot,
       ContentType='image/png'
     )
     
     if self.result["Main page"]["logo"]:
       logo = requests.get(self.result["Main page"]["logo"]).content
-      content = f'{main_url_stripped}-logo.png'
+      content = f'{self.id}/{main_url_stripped}-logo.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
       self.result["Main page"]["s3_logo_id"] = hex_dig
       s3.put_object(
         Bucket='extractor-result',
-        Key=f'{main_url_stripped}-logo.png',
+        Key=f'{self.id}/{main_url_stripped}-logo.png',
         Body=logo,
         ContentType='image/png'
       )
     
     if self.result["Main page"]["favicon"]:
       favicon = requests.get(self.result["Main page"]["favicon"]).content
-      content = f'{main_url_stripped}-favicon.ico'
+      content = f'{self.id}/{main_url_stripped}-favicon.ico'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
       self.result["Main page"]["s3_favicon_id"] = hex_dig
       s3.put_object(
         Bucket='extractor-result',
-        Key=f'{main_url_stripped}-favicon.ico',
+        Key=f'{self.id}/{main_url_stripped}-favicon.ico',
         Body=favicon,
         ContentType='image/x-icon'
       )
@@ -296,7 +304,7 @@ class Extractor:
       page["logo"] = self.get_logo()
       page["favicon"] = self.get_favicon()
       s3 = boto3.client('s3')
-      content = f'{login_url_stripped}-screenshot.png'
+      content = f'{self.id}/{login_url_stripped}-screenshot.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
       page["s3_screenshot_id"] = hex_dig
@@ -305,33 +313,33 @@ class Extractor:
       
       s3.put_object(
         Bucket='extractor-result',
-        Key=f'{login_url_stripped}-screenshot.png',
+        Key=f'{self.id}/{login_url_stripped}-screenshot.png',
         Body=screenshot,
         ContentType='image/png'
       )
       
       if page["logo"]:
         logo = requests.get(page["logo"]).content
-        content = f'{login_url_stripped}-logo.png'
+        content = f'{self.id}/{login_url_stripped}-logo.png'
         hash_object = hashlib.sha256(content.encode('utf-8'))  
         hex_dig = hash_object.hexdigest()
         page["s3_logo_id"] = hex_dig
         s3.put_object(
           Bucket='extractor-result',
-          Key=f'{login_url_stripped}-logo.png',
+          Key=f'{self.id}/{login_url_stripped}-logo.png',
           Body=logo,
           ContentType='image/png'
         )
       
       if page["favicon"]:
         favicon = requests.get(page["favicon"]).content
-        content = f'{login_url_stripped}-favicon-ico'
+        content = f'{self.id}/{login_url_stripped}-favicon.ico'
         hash_object = hashlib.sha256(content.encode('utf-8'))  
         hex_dig = hash_object.hexdigest()
         page["s3_favicon_id"] = hex_dig
         s3.put_object(
           Bucket='extractor-result',
-          Key=f'{login_url_stripped}-favicon.ico',
+          Key=f'{self.id}/{login_url_stripped}-favicon.ico',
           Body=favicon,
           ContentType='image/x-icon'
         )
@@ -347,10 +355,9 @@ class Extractor:
     self.driver.close()
     
     if self.storage:
-      main_url_name = self.main_url_name
       table_name = "extractor_result"
-      table = boto3.resource('dynamodb').Table(table_name)
-      table.put_item(Item={'stripped_url': main_url_name, 'result': self.result})
+      table = boto3.resource('dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name).Table(table_name)
+      table.put_item(Item={'id': self.id, 'result': self.result})
     
     self.result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return json.dumps(self.result)

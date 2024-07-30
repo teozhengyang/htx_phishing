@@ -5,6 +5,7 @@ import io
 import json
 import numpy as np
 import onnxruntime
+import os
 import requests
 import tldextract
 import hashlib
@@ -12,39 +13,13 @@ from datetime import datetime
 from PIL import Image
 from models.PhishIntention.phishintention import PhishIntentionWrapper
 
-urls_ministries =["http://www.mci.gov.sg", "http://www.mccy.gov.sg", "http://www.mindef.gov.sg", "http://www.moe.gov.sg", 
-                    "http://www.mof.gov.sg", "http://www.mfa.gov.sg", "http://www.moh.gov.sg", "http://www.mha.gov.sg", 
-                    "http://www.mlaw.gov.sg", "http://www.mom.gov.sg", "http://www.mnd.gov.sg", "http://www.msf.gov.sg",
-                    "http://www.mse.gov.sg", "http://www.mti.gov.sg", "http://www.mot.gov.sg", "http://www.pmo.gov.sg"
-                    ]
-urls_stats_boards = ["https://www.acra.gov.sg", "https://www.a-star.edu.sg", "https://www.boa.gov.sg", "https://www.bca.gov.sg",
-                       "https://www.cpf.gov.sg/", "https://www.caas.gov.sg/", "https://www.csc.gov.sg/", "https://www.cccs.gov.sg/",
-                       "https://www.cea.gov.sg/", "https://www.dsta.gov.sg/", "https://www.edb.gov.sg/", "https://www.ema.gov.sg/",
-                       "https://www.entreprisesg.gov.sg/", "https://www.gra.gov.sg/", "https://www.tech.gov.sg/", "https://www.hpb.gov.sg/",
-                       "https://www.hsa.gov.sg/", "https://www.htx.gov.sg/", "https://www.hlb.gov.sg/", "https://www.hdb.gov.sg/", 
-                       "https://www.imdb.gov.sg/", "https://www.iras.gov.sg/", "https://www.ipos.gov.sg/", "https://www.jtc.gov.sg/",
-                       "https://www.lsb.mlaw.gov.sg/", "https://www.lta.gov.sg/", "https://www.muis.gov.sg/", "https://www.mpa.gov.sg/",
-                       "https://www.mas.gov.sg/", "https://www.nac.gov.sg/", "https://www.ncss.gov.sg/", "https://www.nea.gov.sg/",
-                       "https://www.nhb.gov.sg/", "https://www.nlb.gov.sg/", "https://www.nparks.gov.sg/", "https://www.pa.gov.sg/",
-                       "https://www.peb.gov.sg/", "https://www.pub.gov.sg/", "https://www.ptc.gov.sg/", "https://www.sdc.gov.sg/",
-                       "https://www.seab.gov.sg/", "https://www.sfa.gov.sg/", "https://www.sla.gov.sg/", "https://www.smc.gov.sg/",
-                       "https://www.snb.gov.sg/", "https://www.spc.gov.sg/", "https://www.stb.gov.sg/", "https://www.sportsingapore.gov.sg/",
-                       "https://www.toteboard.gov.sg/", "https://www.tcmpb.gov.sg/", "https://www.ura.gov.sg/", "https://www.ssg-wsg.gov.sg/",
-                       "https://www.yellowribbon.gov.sg/"
-                       ]
-urls_organs_of_state = ["https://www.agc.gov.sg/", "https://www.ago.gov.sg/", "https://www.iac.gov.sg/", "https://www.istana.gov.sg/",
-                          "https://www.judiciary.gov.sg/", "https://www.parliament.gov.sg/", "https://www.psc.gov.sg/", "https://www.cabinet.gov.sg/"
-                        ]
-urls_others = ["https://www.google.com", "https://www.facebook.com", "https://www.instagram.com", "https://www.x.com",
-                 "https://www.shopee.com", "https://www.lazada.com", "https://www.amazon.com", "https://www.ticketmaster.com",
-                 "https://www.carousell.sg", "https://www.dbs.com.sg", "https://www.ocbc.com", "https://www.uob.com.sg", 
-                 "https://www.citibank.com.sg", "https://www.hsbc.com.sg", "https://www.maybank.com.sg", "https://www.sc.com/sg",
-                 "https://www.posb.com.sg"
-                ]
-
 def lambda_handler(event, context):
   all_urls_info = event.get('all_urls_info')
   storage = event.get('storage')
+  id = event.get('id')
+  aws_access_key_id = os.environ["aws_access_key_id"]
+  aws_secret_access_key = os.environ["aws_secret_access_key"]
+  region_name = os.environ["region_name"]
 
   result_dict = json.loads(all_urls_info)
 
@@ -56,7 +31,7 @@ def lambda_handler(event, context):
     main_login_url_info.append(login_page)
       
   for url_info in main_login_url_info:
-    hash_storage = ImageHashingStorage(url_info, storage)
+    hash_storage = ImageHashingStorage(url_info, storage, id)
     stripped_url = url_info["url"].replace("/", "")
     result = hash_storage.run()
     data = {
@@ -72,10 +47,10 @@ def lambda_handler(event, context):
 
     if storage:
       try: 
-        s3 = boto3.client('s3')
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         s3.put_object(
             Bucket='whitelisted-urls-images',
-            Key=f'{stripped_url}.json',
+            Key=f'{id}/{stripped_url}.json',
             Body=json.dumps(data),
             ContentType='application/json'
           )
@@ -87,10 +62,10 @@ def lambda_handler(event, context):
         }
     if not storage:
       try:
-        s3 = boto3.client('s3')
+        s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         s3.put_object(
             Bucket='tested-urls-images',
-            Key=f'{stripped_url}.json',
+            Key=f'{id}/{stripped_url}.json',
             Body=json.dumps(data),
             ContentType='application/json'
           )
@@ -102,11 +77,10 @@ def lambda_handler(event, context):
         }
   
   stripped_url = main_login_url_info[0]["url"].replace("/", "") 
-  s3_content = f'{stripped_url}.json'
+  s3_content = f'{id}/{stripped_url}.json'
   s3_hash_object = hashlib.sha256(s3_content.encode('utf-8'))  
   s3_hex_dig = s3_hash_object.hexdigest()
-  db_content = stripped_url
-  db_hash_object = hashlib.sha256(db_content.encode('utf-8'))  
+  db_hash_object = hashlib.sha256(id.encode('utf-8'))  
   db_hex_dig = db_hash_object.hexdigest()
   identifier = {
     "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
@@ -123,10 +97,14 @@ def lambda_handler(event, context):
         
 class ImageHashingStorage:
   
-  def __init__(self, url_info, storage):
+  def __init__(self, url_info, storage, id):
     self.url_info = url_info
     self.storage = storage
+    self.id = id
     self.phishintention_cls = PhishIntentionWrapper()
+    self.aws_access_key_id = os.environ["aws_access_key_id"]
+    self.aws_secret_access_key = os.environ["aws_secret_access_key"]
+    self.region_name = os.environ["region_name"]
       
   # use detectron v2 model to get logo from screenshot
   def encode_logo_from_screenshot(self, screenshot_path):
@@ -176,8 +154,8 @@ class ImageHashingStorage:
   # encode logo, favicon and screenshots
   def encode_logo_favicon_screenshots(self):
     stripped_url = self.url_info["url"].replace("/", "")
-    s3 = boto3.client('s3')
-    s3.download_file('extractor-result', f'{stripped_url}-screenshot.png', '/tmp/screenshot.png')
+    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+    s3.download_file('extractor-result', f'{self.id}/{stripped_url}-screenshot.png', '/tmp/screenshot.png')
     screenshot = Image.open('/tmp/screenshot.png')
     buf = io.BytesIO()
     screenshot.save(buf, format="PNG")
@@ -232,16 +210,16 @@ class ImageHashingStorage:
   def store_whitelisted_logo_images_favicon_screenshots(self):
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb')
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+    url_table.put_item(Item={'id': self.id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
 
   def store_tested_logo_images_favicon_screenshots(self):
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb')
+    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
-    url_table.put_item(Item={'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+    url_table.put_item(Item={'id': self.id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
   
   def run(self):
     if self.storage:    
