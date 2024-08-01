@@ -45,7 +45,7 @@ def lambda_handler(event, context):
       "dom_tree": result["dom_tree"],
     }
 
-    if storage:
+    if storage == "True":
       try: 
         s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         s3.put_object(
@@ -60,7 +60,7 @@ def lambda_handler(event, context):
           'statusCode': 500,
           'body': json.dumps(f'Error storing relevant hashes of {url_info["url"]} in S3')
         }
-    if not storage:
+    else:
       try:
         s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         s3.put_object(
@@ -231,7 +231,7 @@ class ImageHashingStorage:
     url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
   
   def run(self):
-    if self.storage:    
+    if self.storage == "True":    
       self.encode_logo_favicon_screenshots()
       self.hash_logo_favicon_screenshots()
       self.store_whitelisted_logo_images_favicon_screenshots()

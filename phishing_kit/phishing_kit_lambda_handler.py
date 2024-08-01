@@ -36,8 +36,6 @@ def lambda_handler(event, context):
         response_dict = json.loads(response_payload)
         
         response_body = response_dict['body']
-        print(response_body)
-        print("pass extractor")
         storage_input = {
             "all_urls_info": response_body,
             "storage": storage,
@@ -54,7 +52,9 @@ def lambda_handler(event, context):
         response_payload = response['Payload'].read()
         response_dict = json.loads(response_payload)
         response_body = response_dict['body']
-        if storage:
+        
+        
+        if storage == "True":
             body = {
                 "stored_url": url,
                 "result": "Successfully stored data",
@@ -64,7 +64,7 @@ def lambda_handler(event, context):
                 "statusCode": 200,
                 "body": json.dumps(body),
             }
-        elif phishing_kit:
+        elif phishing_kit == "True":
             phishing_kit = PhishingKit(url, False, id)
             phishing_kit.run()
             body = {
@@ -79,8 +79,9 @@ def lambda_handler(event, context):
             }
         else:
             body = {
+                "extracted_url": url,
                 "result": "Extractor was deployed",
-                "result": response_body
+                "id": id
             }
             return {
                 "statusCode": 200,

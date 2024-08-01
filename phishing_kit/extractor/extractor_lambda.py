@@ -388,8 +388,16 @@ class Extractor:
     # close the driver
     self.driver.close()
     
+    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+    
+    s3.put_object(
+      Bucket='extractor-result',
+      Key=f'{self.id}.json',
+      Body=json.dumps(self.result_without_dom_tree),
+      ContentType='application/json'
+    )
         
-    if self.storage:
+    if self.storage == "True":
       table_name = "extractor_result"
       table = boto3.resource('dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name).Table(table_name)
       table.put_item(Item={'id': self.id, 'result': self.result_without_dom_tree})
