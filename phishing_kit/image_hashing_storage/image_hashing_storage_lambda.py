@@ -17,9 +17,9 @@ def lambda_handler(event, context):
   all_urls_info = event.get('all_urls_info')
   storage = event.get('storage')
   id = event.get('id')
-  aws_access_key_id = os.environ["aws_access_key_id"]
-  aws_secret_access_key = os.environ["aws_secret_access_key"]
-  region_name = os.environ["region_name"]
+  aws_access_key_id = "AKIA2CY6Z3QHIPGGY2TD"
+  aws_secret_access_key = "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"
+  region_name = "ap-southeast-1"
 
   result_dict = json.loads(all_urls_info)
 
@@ -30,8 +30,8 @@ def lambda_handler(event, context):
   for _, login_page in enumerate(result_dict["Login pages"]):
     main_login_url_info.append(login_page)
       
-  for url_info in main_login_url_info:
-    hash_storage = ImageHashingStorage(url_info, storage, id)
+  for i, url_info in enumerate(main_login_url_info):
+    hash_storage = ImageHashingStorage(url_info, storage, id, i)
     stripped_url = url_info["url"].replace("/", "")
     result = hash_storage.run()
     data = {
@@ -43,6 +43,7 @@ def lambda_handler(event, context):
       "hash_logo": result["hash_logo"],
       "hash_favicon": result["hash_favicon"],
       "hash_screenshot": result["hash_screenshot"],
+      "dom_tree": result["dom_tree"],
     }
 
     if storage:
@@ -97,14 +98,15 @@ def lambda_handler(event, context):
         
 class ImageHashingStorage:
   
-  def __init__(self, url_info, storage, id):
+  def __init__(self, url_info, storage, id, i):
     self.url_info = url_info
     self.storage = storage
     self.id = id
+    self.i = i
     self.phishintention_cls = PhishIntentionWrapper()
-    self.aws_access_key_id = os.environ["aws_access_key_id"]
-    self.aws_secret_access_key = os.environ["aws_secret_access_key"]
-    self.region_name = os.environ["region_name"]
+    self.aws_access_key_id = "AKIA2CY6Z3QHIPGGY2TD"
+    self.aws_secret_access_key = "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"
+    self.region_name = "ap-southeast-1"
       
   # use detectron v2 model to get logo from screenshot
   def encode_logo_from_screenshot(self, screenshot_path):
@@ -208,18 +210,26 @@ class ImageHashingStorage:
     
   # store encodings and hashes in db
   def store_whitelisted_logo_images_favicon_screenshots(self):
+    if self.i == 0:
+      id = self.id
+    else:
+      id = f"{self.id}-{self.i}"
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
     dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    url_table.put_item(Item={'id': self.id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+    url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
 
   def store_tested_logo_images_favicon_screenshots(self):
+    if self.i == 0:
+      id = self.id
+    else:
+      id = f"{self.id}-{self.i}"
     brand = tldextract.extract(self.url_info["url"]).domain
     self.url_info["brand"] = brand  
     dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
-    url_table.put_item(Item={'id': self.id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+    url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
   
   def run(self):
     if self.storage:    

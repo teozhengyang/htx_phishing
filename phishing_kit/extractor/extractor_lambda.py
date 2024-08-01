@@ -35,9 +35,9 @@ class Extractor:
     self.main_url = main_url
     self.storage = storage  
     self.id = id
-    self.aws_access_key_id = os.environ["aws_access_key_id"]
-    self.aws_secret_access_key = os.environ["aws_secret_access_key"]
-    self.region_name = os.environ["region_name"]
+    self.aws_access_key_id = "AKIA2CY6Z3QHIPGGY2TD"
+    self.aws_secret_access_key = "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"
+    self.region_name = "ap-southeast-1"
   
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless=new")
@@ -72,6 +72,8 @@ class Extractor:
         service=service,
         options=chrome_options
     )
+    
+    self.driver.set_page_load_timeout(20)
     
     self.driver.execute_script(""" 
                 // Function to remove elements by selector 
@@ -145,6 +147,11 @@ class Extractor:
       "Main page": {},
       "Login pages": [],
     }
+    
+    self.result_without_dom_tree = {
+      "Main page": {},
+      "Login pages": [],
+    }
   
   # obtain login pages from main page
   def get_login_pages(self):
@@ -157,6 +164,7 @@ class Extractor:
       if href and href not in self.login_urls:
         self.login_urls.append(href)
     self.result["Login pages"] = [{"url": url} for url in self.login_urls]
+    self.result_without_dom_tree["Login pages"] = [{"url": url} for url in self.login_urls]
   
   # get all scripts in website
   def get_js_scripts(self):
@@ -239,6 +247,13 @@ class Extractor:
     except:
       return None
   
+  # get dom tree from website
+  def get_dom_tree(self):
+    try:
+      return self.driver.page_source
+    except:
+      return None
+  
   # insert data for main page
   def insert_main_data(self):
     self.driver.get(self.main_url)
@@ -248,10 +263,17 @@ class Extractor:
     self.result["Main page"]["files"] = self.get_files()
     self.result["Main page"]["logo"] = self.get_logo()
     self.result["Main page"]["favicon"] = self.get_favicon()
+    self.result["Main page"]["dom_tree"] = self.get_dom_tree()
+    
+    self.result_without_dom_tree["Main page"]["url"] = self.main_url
+    self.result_without_dom_tree["Main page"]["js"] = self.get_js_scripts()
+    self.result_without_dom_tree["Main page"]["files"] = self.get_files()
+    self.result_without_dom_tree["Main page"]["logo"] = self.get_logo()
+    self.result_without_dom_tree["Main page"]["favicon"] = self.get_favicon()
     
     main_url_stripped = self.main_url.replace("/", "") 
     
-    s3 = boto3.client('s3')
+    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     
     screenshot = self.driver.get_screenshot_as_png()
     
@@ -303,7 +325,8 @@ class Extractor:
       page["files"] = self.get_files()
       page["logo"] = self.get_logo()
       page["favicon"] = self.get_favicon()
-      s3 = boto3.client('s3')
+      page["dom_tree"] = self.get_dom_tree()
+      s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
       content = f'{self.id}/{login_url_stripped}-screenshot.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
@@ -344,6 +367,15 @@ class Extractor:
           ContentType='image/x-icon'
         )
   
+  # insert data for login pages
+  def insert_login_data_other(self):
+    for page in self.result_without_dom_tree["Login pages"]:
+      self.driver.get(page["url"])
+      page["js"] = self.get_js_scripts()
+      page["files"] = self.get_files()
+      page["logo"] = self.get_logo()
+      page["favicon"] = self.get_favicon()
+  
   def run(self):
     # extract main page data
     self.insert_main_data()
@@ -351,13 +383,16 @@ class Extractor:
     # extract all login pages data
     self.insert_login_data()
       
+    self.insert_login_data_other()
+    
     # close the driver
     self.driver.close()
     
+        
     if self.storage:
       table_name = "extractor_result"
       table = boto3.resource('dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name).Table(table_name)
-      table.put_item(Item={'id': self.id, 'result': self.result})
+      table.put_item(Item={'id': self.id, 'result': self.result_without_dom_tree})
     
     self.result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     return json.dumps(self.result)
