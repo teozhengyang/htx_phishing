@@ -290,7 +290,7 @@ class Extractor:
     )
     
     if self.result["Main page"]["logo"]:
-      logo = requests.get(self.result["Main page"]["logo"]).content
+      logo = requests.get(self.result["Main page"]["logo"],timeout=10,verify=False).content
       content = f'{self.id}/{main_url_stripped}-logo.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
@@ -303,7 +303,7 @@ class Extractor:
       )
     
     if self.result["Main page"]["favicon"]:
-      favicon = requests.get(self.result["Main page"]["favicon"]).content
+      favicon = requests.get(self.result["Main page"]["favicon"],timeout=10,verify=False).content
       content = f'{self.id}/{main_url_stripped}-favicon.ico'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
@@ -342,7 +342,7 @@ class Extractor:
       )
       
       if page["logo"]:
-        logo = requests.get(page["logo"]).content
+        logo = requests.get(page["logo"],timeout=10,verify=False).content
         content = f'{self.id}/{login_url_stripped}-logo.png'
         hash_object = hashlib.sha256(content.encode('utf-8'))  
         hex_dig = hash_object.hexdigest()
@@ -355,7 +355,7 @@ class Extractor:
         )
       
       if page["favicon"]:
-        favicon = requests.get(page["favicon"]).content
+        favicon = requests.get(page["favicon"],timeout=10,verify=False).content
         content = f'{self.id}/{login_url_stripped}-favicon.ico'
         hash_object = hashlib.sha256(content.encode('utf-8'))  
         hex_dig = hash_object.hexdigest()

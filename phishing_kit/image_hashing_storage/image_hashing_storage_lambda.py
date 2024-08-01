@@ -5,7 +5,6 @@ import io
 import json
 import numpy as np
 import onnxruntime
-import os
 import requests
 import tldextract
 import hashlib
@@ -121,7 +120,7 @@ class ImageHashingStorage:
     try:
       if self.url_info["logo"]:
         logo_url = self.url_info["logo"]
-        response = requests.get(logo_url)
+        response = requests.get(logo_url,timeout=10,verify=False)
         response.raise_for_status()
         data = response.content
         image = data
@@ -139,7 +138,7 @@ class ImageHashingStorage:
     try:
       if self.url_info["favicon"]:
         favicon_url = self.url_info["favicon"]
-        response = requests.get(favicon_url)
+        response = requests.get(favicon_url,timeout=10,verify=False)
         response.raise_for_status()
         data = response.content
         image = data
