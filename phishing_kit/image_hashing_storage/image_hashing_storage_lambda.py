@@ -65,7 +65,7 @@ def lambda_handler(event, context):
         s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key, region_name=region_name)
         s3.put_object(
             Bucket='tested-urls-images',
-            Key=f'{id}/{stripped_url}.json',
+            Key=f'{id}.json',
             Body=json.dumps(data),
             ContentType='application/json'
           )

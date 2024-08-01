@@ -52,10 +52,8 @@ def lambda_handler(event, context):
         
         # Read the streaming body
         response_payload = response['Payload'].read()
-        print(response_payload)
         response_dict = json.loads(response_payload)
         response_body = response_dict['body']
-        print("pass storage")
         if storage:
             body = {
                 "stored_url": url,
@@ -81,9 +79,8 @@ def lambda_handler(event, context):
             }
         else:
             body = {
-                "extracted_url": url,
                 "result": "Extractor was deployed",
-                "id": id
+                "result": response_body
             }
             return {
                 "statusCode": 200,
@@ -91,7 +88,6 @@ def lambda_handler(event, context):
                 
             }
     except Exception as e:
-        print("not catch here")
         phishing_kit = PhishingKit(url, True, id)
         error = phishing_kit.run_error(repr(e))
         return {
