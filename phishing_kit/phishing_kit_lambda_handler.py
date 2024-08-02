@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     url = event.get("url")
     storage = event.get("storage")
     id = event.get("id")
-    phishing_kit = event.get("phishing_kit")
+    phishing_kit_bool = event.get("phishing_kit")
     
     extractor_input = {
         "url": url,
@@ -64,18 +64,17 @@ def lambda_handler(event, context):
                 "statusCode": 200,
                 "body": json.dumps(body),
             }
-        elif phishing_kit == "True":
-            phishing_kit = PhishingKit(url, False, id)
+        elif phishing_kit_bool == "True":
+            phishing_kit = PhishingKit(url, False, id, phishing_kit_bool)
             phishing_kit.run()
             body = {
                 "tested_url": url,
                 "result": "Phishing kit was deployed",
                 "id": id
-              }
+            }
             return {
                 "statusCode": 200,
                 "body": json.dumps(body),
-                
             }
         else:
             body = {
@@ -89,7 +88,7 @@ def lambda_handler(event, context):
                 
             }
     except Exception as e:
-        phishing_kit = PhishingKit(url, True, id)
+        phishing_kit = PhishingKit(url, True, id, phishing_kit_bool)
         error = phishing_kit.run_error(repr(e))
         return {
             "statusCode": 500,

@@ -275,45 +275,58 @@ class Extractor:
     
     s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     
-    screenshot = self.driver.get_screenshot_as_png()
-    
-    content = f'{self.id}/{main_url_stripped}-screenshot.png'
-    hash_object = hashlib.sha256(content.encode('utf-8'))  
-    hex_dig = hash_object.hexdigest()
-    self.result["Main page"]["s3_screenshot_id"] = hex_dig
-    
-    s3.put_object(
-      Bucket='extractor-result',
-      Key=f'{self.id}/{main_url_stripped}-screenshot.png',
-      Body=screenshot,
-      ContentType='image/png'
-    )
-    
-    if self.result["Main page"]["logo"]:
-      logo = requests.get(self.result["Main page"]["logo"],timeout=10,verify=False).content
-      content = f'{self.id}/{main_url_stripped}-logo.png'
+    try:
+      
+      screenshot = self.driver.get_screenshot_as_png()
+      
+      content = f'{self.id}/{main_url_stripped}-screenshot.png'
       hash_object = hashlib.sha256(content.encode('utf-8'))  
       hex_dig = hash_object.hexdigest()
-      self.result["Main page"]["s3_logo_id"] = hex_dig
+      self.result["Main page"]["s3_screenshot_id"] = hex_dig
+      
       s3.put_object(
         Bucket='extractor-result',
-        Key=f'{self.id}/{main_url_stripped}-logo.png',
-        Body=logo,
+        Key=f'{self.id}/{main_url_stripped}-screenshot.png',
+        Body=screenshot,
         ContentType='image/png'
       )
+      print("Got main page screenshot")
+    except:
+      print("Error getting main page screenshot")
     
-    if self.result["Main page"]["favicon"]:
-      favicon = requests.get(self.result["Main page"]["favicon"],timeout=10,verify=False).content
-      content = f'{self.id}/{main_url_stripped}-favicon.ico'
-      hash_object = hashlib.sha256(content.encode('utf-8'))  
-      hex_dig = hash_object.hexdigest()
-      self.result["Main page"]["s3_favicon_id"] = hex_dig
-      s3.put_object(
-        Bucket='extractor-result',
-        Key=f'{self.id}/{main_url_stripped}-favicon.ico',
-        Body=favicon,
-        ContentType='image/x-icon'
-      )
+    try:
+      if self.result["Main page"]["logo"]:
+        logo = requests.get(self.result["Main page"]["logo"],timeout=10,verify=False).content
+        content = f'{self.id}/{main_url_stripped}-logo.png'
+        hash_object = hashlib.sha256(content.encode('utf-8'))  
+        hex_dig = hash_object.hexdigest()
+        self.result["Main page"]["s3_logo_id"] = hex_dig
+        s3.put_object(
+          Bucket='extractor-result',
+          Key=f'{self.id}/{main_url_stripped}-logo.png',
+          Body=logo,
+          ContentType='image/png'
+        )
+        print("Got main page logo")
+    except:
+      print("Error getting main page logo")  
+        
+    try:
+      if self.result["Main page"]["favicon"]:
+        favicon = requests.get(self.result["Main page"]["favicon"],timeout=10,verify=False).content
+        content = f'{self.id}/{main_url_stripped}-favicon.ico'
+        hash_object = hashlib.sha256(content.encode('utf-8'))  
+        hex_dig = hash_object.hexdigest()
+        self.result["Main page"]["s3_favicon_id"] = hex_dig
+        s3.put_object(
+          Bucket='extractor-result',
+          Key=f'{self.id}/{main_url_stripped}-favicon.ico',
+          Body=favicon,
+          ContentType='image/x-icon'
+        )
+        print("Got main page favicon")
+    except:
+      print("Error getting main page favicon")
     
   # insert data for login pages
   def insert_login_data(self):
@@ -332,6 +345,7 @@ class Extractor:
       hex_dig = hash_object.hexdigest()
       page["s3_screenshot_id"] = hex_dig
     
+    try:
       screenshot = self.driver.get_screenshot_as_png()
       
       s3.put_object(
@@ -340,32 +354,43 @@ class Extractor:
         Body=screenshot,
         ContentType='image/png'
       )
+      print("Got login page screenshot")
+    except:
+      print("Error getting login page screenshot")
       
-      if page["logo"]:
-        logo = requests.get(page["logo"],timeout=10,verify=False).content
-        content = f'{self.id}/{login_url_stripped}-logo.png'
-        hash_object = hashlib.sha256(content.encode('utf-8'))  
-        hex_dig = hash_object.hexdigest()
-        page["s3_logo_id"] = hex_dig
-        s3.put_object(
-          Bucket='extractor-result',
-          Key=f'{self.id}/{login_url_stripped}-logo.png',
-          Body=logo,
-          ContentType='image/png'
-        )
+      try:
+        if page["logo"]:
+          logo = requests.get(page["logo"],timeout=10,verify=False).content
+          content = f'{self.id}/{login_url_stripped}-logo.png'
+          hash_object = hashlib.sha256(content.encode('utf-8'))  
+          hex_dig = hash_object.hexdigest()
+          page["s3_logo_id"] = hex_dig
+          s3.put_object(
+            Bucket='extractor-result',
+            Key=f'{self.id}/{login_url_stripped}-logo.png',
+            Body=logo,
+            ContentType='image/png'
+          )
+          print("Got login page logo")
+      except:
+        print("Error getting login page logo")
       
-      if page["favicon"]:
-        favicon = requests.get(page["favicon"],timeout=10,verify=False).content
-        content = f'{self.id}/{login_url_stripped}-favicon.ico'
-        hash_object = hashlib.sha256(content.encode('utf-8'))  
-        hex_dig = hash_object.hexdigest()
-        page["s3_favicon_id"] = hex_dig
-        s3.put_object(
-          Bucket='extractor-result',
-          Key=f'{self.id}/{login_url_stripped}-favicon.ico',
-          Body=favicon,
-          ContentType='image/x-icon'
-        )
+      try:
+        if page["favicon"]:
+          favicon = requests.get(page["favicon"],timeout=10,verify=False).content
+          content = f'{self.id}/{login_url_stripped}-favicon.ico'
+          hash_object = hashlib.sha256(content.encode('utf-8'))  
+          hex_dig = hash_object.hexdigest()
+          page["s3_favicon_id"] = hex_dig
+          s3.put_object(
+            Bucket='extractor-result',
+            Key=f'{self.id}/{login_url_stripped}-favicon.ico',
+            Body=favicon,
+            ContentType='image/x-icon'
+          )
+          print("Got login page favicon")
+      except:
+        print("Error getting login page favicon")
   
   # insert data for login pages
   def insert_login_data_other(self):
@@ -377,9 +402,11 @@ class Extractor:
       page["favicon"] = self.get_favicon()
   
   def run(self):
+    print("Extracting main page data")
     # extract main page data
     self.insert_main_data()
     
+    print("Extracting login pages data")
     # extract all login pages data
     self.insert_login_data()
       
@@ -388,6 +415,7 @@ class Extractor:
     # close the driver
     self.driver.close()
     
+    print("Storing extractor result in S3")
     s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
     
     s3.put_object(
@@ -398,6 +426,7 @@ class Extractor:
     )
         
     if self.storage == "True":
+      print("Storing extractor result in dynamodb")
       table_name = "extractor_result"
       table = boto3.resource('dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name).Table(table_name)
       table.put_item(Item={'id': self.id, 'result': self.result_without_dom_tree})

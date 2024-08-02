@@ -99,6 +99,7 @@ class ImageHashingStorage:
   
   def __init__(self, url_info, storage, id, i):
     self.url_info = url_info
+    self.stripped_url = self.url_info["url"].replace("/", "")
     self.storage = storage
     self.id = id
     self.i = i
@@ -109,11 +110,15 @@ class ImageHashingStorage:
       
   # use detectron v2 model to get logo from screenshot
   def encode_logo_from_screenshot(self, screenshot_path):
-    self.phishintention_cls.test_orig_phishintention(screenshot_path)
-    with open("/tmp/logo.png", "rb") as file:
-      data = file.read()
-      encoded_data = base64.b64encode(data).decode('utf-8')
-    self.url_info["encoding_logo"] = encoded_data
+    try:
+      self.phishintention_cls.test_orig_phishintention(screenshot_path)
+      with open(f"/tmp/{self.id}-{self.stripped_url}-logo.png", "rb") as file:
+        data = file.read()
+        encoded_data = base64.b64encode(data).decode('utf-8')
+      self.url_info["encoding_logo"] = encoded_data
+      print("Encoded logo")
+    except:
+      print("Error encoding logo")
   
   # encode logo from url or screenshot
   def encode_logo(self, screenshot_path):
@@ -124,10 +129,11 @@ class ImageHashingStorage:
         response.raise_for_status()
         data = response.content
         image = data
-        with open("/tmp/logo.png", "wb") as file:
+        with open("/tmp/{self.id}-{self.stripped_url}-logo.png", "wb") as file:
           file.write(image)
         encoded_data = base64.b64encode(image).decode('utf-8')
         self.url_info["encoding_logo"] = encoded_data
+        print("Encoded logo")
       else:
         self.encode_logo_from_screenshot(screenshot_path)
     except:
@@ -142,30 +148,37 @@ class ImageHashingStorage:
         response.raise_for_status()
         data = response.content
         image = data
-        with open("/tmp/favicon.ico", "wb") as file:
+        with open("/tmp/{self.id}-{self.stripped_url}-favicon.ico", "wb") as file:
           file.write(image)
         encoded_data = base64.b64encode(image).decode('utf-8')
         self.url_info["encoding_favicon"] = encoded_data
+        print("Encoded favicon")
       else:
         self.url_info["favicon"] = None
         self.url_info["encoding_favicon"] = None
+        print("No favicon")
     except:
+      print("Error encoding favicon")
       self.url_info["encoding_favicon"] = None
     
   # encode logo, favicon and screenshots
   def encode_logo_favicon_screenshots(self):
-    stripped_url = self.url_info["url"].replace("/", "")
-    s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
-    s3.download_file('extractor-result', f'{self.id}/{stripped_url}-screenshot.png', '/tmp/screenshot.png')
-    screenshot = Image.open('/tmp/screenshot.png')
-    buf = io.BytesIO()
-    screenshot.save(buf, format="PNG")
-    screenshot = buf.getvalue()
-    encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
-    self.url_info["encoding_screenshot"] = encoded_screenshot
-    
-    self.encode_logo("/tmp/screenshot.png")
-    self.encode_favicon()
+    try:
+      stripped_url = self.url_info["url"].replace("/", "")
+      s3 = boto3.client('s3', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+      s3.download_file('extractor-result', f'{self.id}/{stripped_url}-screenshot.png', '/tmp/{self.id}-{self.stripped_url}-screenshot.png')
+      screenshot = Image.open('/tmp/{self.id}-{self.stripped_url}-screenshot.png')
+      buf = io.BytesIO()
+      screenshot.save(buf, format="PNG")
+      screenshot = buf.getvalue()
+      encoded_screenshot = base64.b64encode(screenshot).decode('utf-8')
+      self.url_info["encoding_screenshot"] = encoded_screenshot
+      
+      self.encode_logo("/tmp/{self.id}-{self.stripped_url}-screenshot.png")
+      self.encode_favicon()
+      print("Encoded all images")
+    except:
+      print("Error encoding images")
   
   # load neural hash model
   def load_neural_hash_model(self):
@@ -194,51 +207,70 @@ class ImageHashingStorage:
       else:
         self.url_info[f"hash_{type}"] = None
     except:
+      print("Error in using neural hash for images")
       self.url_info[f"hash_{type}"] = None
   
   # hash logo, favicon and screenshots (neural hash for logo and favicon, dhash for screenshots)
   def hash_logo_favicon_screenshots(self):
-    self.load_neural_hash_model()
-    self.neural_hash_image("logo")
-    self.neural_hash_image("favicon")
-      
-    decoded_screenshot = base64.b64decode(self.url_info["encoding_screenshot"])
-    screenshot = Image.open(io.BytesIO(decoded_screenshot))
-    screenshot_hash = imagehash.dhash(screenshot)
-    self.url_info["hash_screenshot"] = str(screenshot_hash)
+    try:
+      self.load_neural_hash_model()
+      self.neural_hash_image("logo")
+      self.neural_hash_image("favicon")
+        
+      decoded_screenshot = base64.b64decode(self.url_info["encoding_screenshot"])
+      screenshot = Image.open(io.BytesIO(decoded_screenshot))
+      screenshot_hash = imagehash.dhash(screenshot)
+      self.url_info["hash_screenshot"] = str(screenshot_hash)
+      print("Hashed images")
+    except:
+      print("Error hashing images")
     
   # store encodings and hashes in db
   def store_whitelisted_logo_images_favicon_screenshots(self):
-    if self.i == 0:
-      id = self.id
-    else:
-      id = f"{self.id}-{self.i}"
-    brand = tldextract.extract(self.url_info["url"]).domain
-    self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
-    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
-    url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+    try:
+      if self.i == 0:
+        id = self.id
+      else:
+        id = f"{self.id}-{self.i}"
+      brand = tldextract.extract(self.url_info["url"]).domain
+      self.url_info["brand"] = brand  
+      dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+      url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes')
+      url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+      print("Stored images")
+    except:
+      print("Error storing images")
 
   def store_tested_logo_images_favicon_screenshots(self):
-    if self.i == 0:
-      id = self.id
-    else:
-      id = f"{self.id}-{self.i}"
-    brand = tldextract.extract(self.url_info["url"]).domain
-    self.url_info["brand"] = brand  
-    dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
-    url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
-    url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
-  
+    try:
+      if self.i == 0:
+        id = self.id
+      else:
+        id = f"{self.id}-{self.i}"
+      brand = tldextract.extract(self.url_info["url"]).domain
+      self.url_info["brand"] = brand  
+      dyanmo = boto3.resource(service_name='dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name)
+      url_table = dyanmo.Table('ddb-htx-le-devizapp-imagehashes-tested')
+      url_table.put_item(Item={'id': id, 'url': self.url_info["url"], 'brand': self.url_info["brand"],'hash_logo': self.url_info["hash_logo"], 'hash_favicon': self.url_info["hash_favicon"], 'hash_screenshot': self.url_info["hash_screenshot"]})
+      print("Stored images")
+    except:
+      print("Error storing images")
+    
   def run(self):
-    if self.storage == "True":    
+    if self.storage == "True":   
+      print("Encoding images")
       self.encode_logo_favicon_screenshots()
+      print("Hashing images")
       self.hash_logo_favicon_screenshots()
+      print("Storing images")
       self.store_whitelisted_logo_images_favicon_screenshots()
       return self.url_info
     else: 
+      print("Encoding images")
       self.encode_logo_favicon_screenshots()
+      print("Hashing images")
       self.hash_logo_favicon_screenshots()
+      print("Storing images")
       self.store_tested_logo_images_favicon_screenshots()
       return self.url_info
   

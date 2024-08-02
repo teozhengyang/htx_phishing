@@ -10,9 +10,10 @@ from fuzzywuzzy import fuzz
 class PhishingKit:
   
   # obtain the hashes of the logo, favicon and screenshot
-  def __init__(self, url, error, id):
+  def __init__(self, url, error, id, phishing_kit_bool):
     self.url = url
     self.id = id
+    self.phishing_kit_bool = phishing_kit_bool
     self.phishing_kit_result_db = os.environ["phishing_kit_result_db"]
     self.aws_access_key_id = os.environ["aws_access_key_id"]
     self.aws_secret_access_key = os.environ["aws_secret_access_key"]
@@ -45,7 +46,7 @@ class PhishingKit:
         best_match_score = score
         best_match_url = url["url"]
         best_match_id = url["id"]
-    if best_match_score < 75:
+    if best_match_score < 80:
       raise Exception("No matching brand found")
     else:
       self.whitelisted_url = best_match_url
@@ -123,18 +124,17 @@ class PhishingKit:
       }
       phishing_table = boto3.resource('dynamodb', aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key, region_name=self.region_name).Table(self.phishing_kit_result_db)
       phishing_table.put_item(Item={'id': self.id, "tested_url": self.url,
-                                    "tested_url_logo_hash": f"tested_url_images/{self.id}.json",
-                                    "tested_url_favicon_hash": f"tested_url_images/{self.id}.json",
-                                    "tested_url_screenshot_hash": f"tested_url_images/{self.id}.json",
-                                    "whitelisted_url": self.whitelisted_url,
-                                    "whitelisted_url_logo_hash": f"whitelisted_url_images/{self.id}.json",
-                                    "whitelisted_url_favicon_hash": f"whitelisted_url_images/{self.id}.json",
-                                    "whitelisted_url_screenshot_hash": f"whitelisted_url_images/{self.id}.json",
-                                    "logo_similarity": str(self.logo_similarity),
-                                    "favicon_similarity": str(self.favicon_similarity),
-                                    "screenshot_similarity": str(self.screenshot_similarity),
-                                    "result": f"match found for {self.whitelisted_brand}"})
-      
+                                      "tested_url_logo_hash": f"tested_url_images/{self.id}.json",
+                                      "tested_url_favicon_hash": f"tested_url_images/{self.id}.json",
+                                      "tested_url_screenshot_hash": f"tested_url_images/{self.id}.json",
+                                      "whitelisted_url": self.whitelisted_url,
+                                      "whitelisted_url_logo_hash": f"whitelisted_url_images/{self.id}.json",
+                                      "whitelisted_url_favicon_hash": f"whitelisted_url_images/{self.id}.json",
+                                      "whitelisted_url_screenshot_hash": f"whitelisted_url_images/{self.id}.json",
+                                      "logo_similarity": str(self.logo_similarity),
+                                      "favicon_similarity": str(self.favicon_similarity),
+                                      "screenshot_similarity": str(self.screenshot_similarity),
+                                      "result": f"match found for {self.whitelisted_brand}"})
       result["datetime"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
       db_content = self.id
       db_hash_object = hashlib.sha256(db_content.encode('utf-8'))  
